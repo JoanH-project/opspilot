@@ -1,0 +1,13 @@
+.DS_Store
+
+# Java / Maven
+backend/target/
+*.class
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Local environment overrides
+.env
