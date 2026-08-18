@@ -9,6 +9,7 @@ import com.opspilot.workspace.InsufficientWorkspaceRoleException;
 import com.opspilot.workspace.WorkspaceNotFoundException;
 import com.opspilot.project.*;
 import com.opspilot.task.*;
+import com.opspilot.document.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,10 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> invalidProjectUpdate(InvalidProjectUpdateException e) { return response(HttpStatus.BAD_REQUEST,e.getMessage(),Map.of()); }
     @ExceptionHandler({TaskNotFoundException.class}) ResponseEntity<ApiError> taskNotFound(RuntimeException e){return response(HttpStatus.NOT_FOUND,e.getMessage(),Map.of());}
     @ExceptionHandler({InvalidTaskAssigneeException.class,InvalidTaskUpdateException.class,MethodArgumentTypeMismatchException.class,HttpMessageNotReadableException.class}) ResponseEntity<ApiError> invalidTaskInput(Exception e){return response(HttpStatus.BAD_REQUEST,"Invalid request",Map.of());}
+    @ExceptionHandler(DocumentNotFoundException.class) ResponseEntity<ApiError> documentNotFound(DocumentNotFoundException e){return response(HttpStatus.NOT_FOUND,e.getMessage(),Map.of());}
+    @ExceptionHandler(DocumentAccessDeniedException.class) ResponseEntity<ApiError> documentDenied(DocumentAccessDeniedException e){return response(HttpStatus.FORBIDDEN,e.getMessage(),Map.of());}
+    @ExceptionHandler(ArchivedDocumentException.class) ResponseEntity<ApiError> archivedDocument(ArchivedDocumentException e){return response(HttpStatus.CONFLICT,e.getMessage(),Map.of());}
+    @ExceptionHandler(InvalidDocumentUpdateException.class) ResponseEntity<ApiError> invalidDocument(InvalidDocumentUpdateException e){return response(HttpStatus.BAD_REQUEST,e.getMessage(),Map.of());}
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());

@@ -1,0 +1,1 @@
+package com.opspilot.document.dto; import com.opspilot.user.User; public record DocumentCreatorResponse(Long id,String name){public static DocumentCreatorResponse from(User u){return new DocumentCreatorResponse(u.getId(),u.getName());}}

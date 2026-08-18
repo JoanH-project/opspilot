@@ -162,6 +162,17 @@ curl -X PATCH http://localhost:8080/api/tasks/1 -H "Authorization: Bearer $ACCES
 curl -X PATCH http://localhost:8080/api/tasks/1/status -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"status":"IN_PROGRESS"}'
 ```
 
+## Documents
+
+```bash
+curl -X POST http://localhost:8080/api/workspaces/1/documents -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"title":"Deployment Runbook","content":"# Deployment\n\nSteps"}'
+curl http://localhost:8080/api/workspaces/1/documents -H "Authorization: Bearer $ACCESS_TOKEN"
+curl http://localhost:8080/api/documents/1 -H "Authorization: Bearer $ACCESS_TOKEN"
+curl -X PATCH http://localhost:8080/api/documents/1 -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"content":"Updated Markdown"}'
+curl -X POST http://localhost:8080/api/documents/1/archive -H "Authorization: Bearer $ACCESS_TOKEN"
+curl 'http://localhost:8080/api/workspaces/1/documents?status=ARCHIVED' -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
 ## Run tests
 
 ```bash

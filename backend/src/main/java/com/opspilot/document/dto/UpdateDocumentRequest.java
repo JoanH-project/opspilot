@@ -1,0 +1,1 @@
+package com.opspilot.document.dto; import jakarta.validation.constraints.Size; public record UpdateDocumentRequest(@Size(max=200,message="Document title must not exceed 200 characters") String title,@Size(max=1000000,message="Document content must not exceed 1000000 characters") String content){}
