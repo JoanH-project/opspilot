@@ -1,0 +1,27 @@
+package com.opspilot.project;
+
+import static org.junit.jupiter.api.Assertions.*;
+import java.lang.reflect.*;
+import java.util.*;
+import com.opspilot.project.dto.*;
+import com.opspilot.user.*;
+import com.opspilot.workspace.*;
+import org.junit.jupiter.api.Test;
+
+class ProjectServiceTest {
+ @Test void memberCreatesActiveProjectWithAuthenticatedCreator() throws Exception { Store s=new Store();User u=s.user("member@x","Member");Workspace w=s.workspace(u);s.member(w,u,WorkspaceRole.MEMBER);ProjectResponse p=s.service().create(w.getId(),u.getId(),new CreateProjectRequest("Portal","Desc"));assertEquals(ProjectStatus.ACTIVE,p.status());assertEquals(u.getId(),p.creator().id()); }
+ @Test void listDefaultsByRequestedStatusAndMembershipIsRequired() throws Exception { Store s=new Store();User u=s.user("u@x","U"),other=s.user("o@x","O");Workspace w=s.workspace(u);s.member(w,u,WorkspaceRole.MEMBER);ProjectService svc=s.service();ProjectResponse p=svc.create(w.getId(),u.getId(),new CreateProjectRequest("A",null));svc.archive(p.id(),u.getId());assertEquals(0,svc.list(w.getId(),u.getId(),ProjectStatus.ACTIVE).size());assertEquals(1,svc.list(w.getId(),u.getId(),ProjectStatus.ARCHIVED).size());assertThrows(WorkspaceNotFoundException.class,()->svc.list(w.getId(),other.getId(),ProjectStatus.ACTIVE)); }
+ @Test void nonMemberCannotViewProject() throws Exception { Store s=new Store();User owner=s.user("o@x","O"),out=s.user("x@x","X");Workspace w=s.workspace(owner);s.member(w,owner,WorkspaceRole.OWNER);ProjectResponse p=s.service().create(w.getId(),owner.getId(),new CreateProjectRequest("P",null));assertThrows(WorkspaceNotFoundException.class,()->s.service().get(p.id(),out.getId())); }
+ @Test void ownerAdminAndCreatorMemberCanUpdateButOtherMemberCannot() throws Exception { Store s=new Store();User owner=s.user("o@x","O"),admin=s.user("a@x","A"),creator=s.user("c@x","C"),other=s.user("m@x","M");Workspace w=s.workspace(owner);s.member(w,owner,WorkspaceRole.OWNER);s.member(w,admin,WorkspaceRole.ADMIN);s.member(w,creator,WorkspaceRole.MEMBER);s.member(w,other,WorkspaceRole.MEMBER);ProjectService svc=s.service();ProjectResponse p=svc.create(w.getId(),creator.getId(),new CreateProjectRequest("P",null));assertEquals("Owner",svc.update(p.id(),owner.getId(),new UpdateProjectRequest("Owner",null)).name());assertEquals("Admin",svc.update(p.id(),admin.getId(),new UpdateProjectRequest("Admin",null)).name());assertEquals("Creator",svc.update(p.id(),creator.getId(),new UpdateProjectRequest("Creator",null)).name());assertThrows(ProjectAccessDeniedException.class,()->svc.update(p.id(),other.getId(),new UpdateProjectRequest("No",null))); }
+ @Test void archiveIsIdempotentAndArchivedProjectCannotBeEdited() throws Exception { Store s=new Store();User u=s.user("u@x","U");Workspace w=s.workspace(u);s.member(w,u,WorkspaceRole.MEMBER);ProjectService svc=s.service();ProjectResponse p=svc.create(w.getId(),u.getId(),new CreateProjectRequest("P",null));assertEquals(ProjectStatus.ARCHIVED,svc.archive(p.id(),u.getId()).status());assertEquals(ProjectStatus.ARCHIVED,svc.archive(p.id(),u.getId()).status());assertThrows(ArchivedProjectException.class,()->svc.update(p.id(),u.getId(),new UpdateProjectRequest("Changed",null))); }
+ static class Store {List<User> us=new ArrayList<>();List<Workspace> ws=new ArrayList<>();List<WorkspaceMember> ms=new ArrayList<>();List<Project> ps=new ArrayList<>();long uid=1,wid=1,mid=1,pid=1;
+  ProjectService service(){WorkspaceMemberRepository mr=memberRepo();return new ProjectService(projectRepo(),userRepo(),new WorkspaceAccessService(mr));}
+  User user(String e,String n)throws Exception{User u=new User(e,"h",n);life(u,"setCreationTimestamps");id(u,uid++);us.add(u);return u;}
+  Workspace workspace(User o)throws Exception{Workspace w=new Workspace("W",o);life(w,"setCreationTimestamps");id(w,wid++);ws.add(w);return w;}
+  void member(Workspace w,User u,WorkspaceRole r)throws Exception{WorkspaceMember m=new WorkspaceMember(w,u,r);life(m,"setJoinedAt");id(m,mid++);ms.add(m);}
+  UserRepository userRepo(){return proxy(UserRepository.class,(m,a)->m.getName().equals("findById")?us.stream().filter(u->u.getId().equals(a[0])).findFirst():bad(m));}
+  WorkspaceMemberRepository memberRepo(){return proxy(WorkspaceMemberRepository.class,(m,a)->m.getName().equals("findByWorkspace_IdAndUser_Id")?ms.stream().filter(x->x.getWorkspace().getId().equals(a[0])&&x.getUser().getId().equals(a[1])).findFirst():bad(m));}
+  ProjectRepository projectRepo(){return proxy(ProjectRepository.class,(m,a)->{if(m.getName().equals("saveAndFlush")){Project p=(Project)a[0];if(p.getId()==null){life(p,"created");id(p,pid++);ps.add(p);}else life(p,"updated");return p;}if(m.getName().equals("findById"))return ps.stream().filter(x->x.getId().equals(a[0])).findFirst();if(m.getName().startsWith("findByWorkspace"))return ps.stream().filter(x->x.getWorkspace().getId().equals(a[0])&&x.getStatus()==a[1]).toList();return bad(m);});}
+  @SuppressWarnings("unchecked") <T>T proxy(Class<T> c,H h){return (T)Proxy.newProxyInstance(c.getClassLoader(),new Class[]{c},(q,m,a)->m.getName().equals("toString")?"s":h.go(m,a));}interface H{Object go(Method m,Object[]a)throws Throwable;}static Object bad(Method m){throw new UnsupportedOperationException(m.getName());}static void id(Object x,long n)throws Exception{Field f=x.getClass().getDeclaredField("id");f.setAccessible(true);f.set(x,n);}static void life(Object x,String n)throws Exception{Method m=x.getClass().getDeclaredMethod(n);m.setAccessible(true);m.invoke(x);}
+ }
+}

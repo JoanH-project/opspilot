@@ -119,6 +119,35 @@ curl http://localhost:8080/api/workspaces/1/members \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
+## Projects
+
+Use the access token from login for all project operations:
+
+```bash
+export ACCESS_TOKEN='<accessToken>'
+```
+
+```bash
+# Create a project
+curl -X POST http://localhost:8080/api/workspaces/1/projects \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Customer Portal","description":"Customer-facing portal"}'
+
+# List active projects (default)
+curl http://localhost:8080/api/workspaces/1/projects \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# List archived projects
+curl 'http://localhost:8080/api/workspaces/1/projects?status=ARCHIVED' \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Get, update, or archive a project
+curl http://localhost:8080/api/projects/1 -H "Authorization: Bearer $ACCESS_TOKEN"
+curl -X PATCH http://localhost:8080/api/projects/1 -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"name":"Updated Portal"}'
+curl -X POST http://localhost:8080/api/projects/1/archive -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
 ## Run tests
 
 ```bash

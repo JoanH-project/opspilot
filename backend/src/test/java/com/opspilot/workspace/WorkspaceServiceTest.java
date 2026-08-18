@@ -100,7 +100,7 @@ class WorkspaceServiceTest {
         long nextUserId = 1, nextWorkspaceId = 1, nextMembershipId = 1;
 
         WorkspaceService service() {
-            return new WorkspaceService(workspaceRepository(), memberRepository(), userRepository());
+            return new WorkspaceService(workspaceRepository(), memberRepository(), userRepository(), new WorkspaceAccessService(memberRepository()));
         }
         User addUser(String email, String name) throws Exception {
             User user = new User(email, "hash", name);

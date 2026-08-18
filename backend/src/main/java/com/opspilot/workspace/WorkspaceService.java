@@ -12,12 +12,14 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final WorkspaceAccessService workspaceAccess;
 
     public WorkspaceService(WorkspaceRepository workspaceRepository, WorkspaceMemberRepository memberRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository, WorkspaceAccessService workspaceAccess) {
         this.workspaceRepository = workspaceRepository;
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
+        this.workspaceAccess = workspaceAccess;
     }
 
     @Transactional
@@ -37,13 +39,13 @@ public class WorkspaceService {
 
     @Transactional(readOnly = true)
     public WorkspaceResponse getWorkspace(Long workspaceId, Long currentUserId) {
-        WorkspaceMember membership = requireMembership(workspaceId, currentUserId);
+        WorkspaceMember membership = workspaceAccess.requireMembership(workspaceId, currentUserId);
         return WorkspaceResponse.from(membership.getWorkspace(), membership.getRole());
     }
 
     @Transactional
     public WorkspaceResponse updateWorkspace(Long workspaceId, Long currentUserId, UpdateWorkspaceRequest request) {
-        WorkspaceMember membership = requireAdminOrOwner(workspaceId, currentUserId);
+        WorkspaceMember membership = workspaceAccess.requireAdminOrOwner(workspaceId, currentUserId);
         Workspace workspace = membership.getWorkspace();
         workspace.rename(request.name().trim());
         Workspace savedWorkspace = workspaceRepository.saveAndFlush(workspace);
@@ -52,21 +54,9 @@ public class WorkspaceService {
 
     @Transactional(readOnly = true)
     public List<WorkspaceMemberResponse> listMembers(Long workspaceId, Long currentUserId) {
-        requireMembership(workspaceId, currentUserId);
+        workspaceAccess.requireMembership(workspaceId, currentUserId);
         return memberRepository.findByWorkspace_IdOrderByJoinedAtAsc(workspaceId).stream()
                 .map(WorkspaceMemberResponse::from).toList();
     }
 
-    private WorkspaceMember requireMembership(Long workspaceId, Long currentUserId) {
-        return memberRepository.findByWorkspace_IdAndUser_Id(workspaceId, currentUserId)
-                .orElseThrow(WorkspaceNotFoundException::new);
-    }
-
-    private WorkspaceMember requireAdminOrOwner(Long workspaceId, Long currentUserId) {
-        WorkspaceMember membership = requireMembership(workspaceId, currentUserId);
-        if (membership.getRole() != WorkspaceRole.OWNER && membership.getRole() != WorkspaceRole.ADMIN) {
-            throw new InsufficientWorkspaceRoleException();
-        }
-        return membership;
-    }
 }
