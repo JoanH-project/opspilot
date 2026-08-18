@@ -85,6 +85,40 @@ curl http://localhost:8080/api/users/me \
 
 The API is stateless: use `Authorization: Bearer <accessToken>` on each protected request. Access tokens expire after `JWT_EXPIRATION_SECONDS` (one hour by default); refresh tokens are not part of this phase.
 
+## Workspaces
+
+All workspace endpoints require an access token:
+
+```bash
+export ACCESS_TOKEN='<accessToken>'
+```
+
+```bash
+# Create
+curl -X POST http://localhost:8080/api/workspaces \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Joan Workspace"}'
+
+# List workspaces available to the current user
+curl http://localhost:8080/api/workspaces \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Get one workspace
+curl http://localhost:8080/api/workspaces/1 \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Rename (OWNER or ADMIN only)
+curl -X PATCH http://localhost:8080/api/workspaces/1 \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Updated Workspace"}'
+
+# List members
+curl http://localhost:8080/api/workspaces/1/members \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
 ## Run tests
 
 ```bash

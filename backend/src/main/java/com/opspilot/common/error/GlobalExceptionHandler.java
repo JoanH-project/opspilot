@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.opspilot.auth.DuplicateEmailException;
 import com.opspilot.auth.InvalidCredentialsException;
+import com.opspilot.workspace.InsufficientWorkspaceRoleException;
+import com.opspilot.workspace.WorkspaceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -29,6 +31,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception) {
         return response(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(WorkspaceNotFoundException.class)
+    ResponseEntity<ApiError> handleWorkspaceNotFound(WorkspaceNotFoundException exception) {
+        return response(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(InsufficientWorkspaceRoleException.class)
+    ResponseEntity<ApiError> handleInsufficientWorkspaceRole(InsufficientWorkspaceRoleException exception) {
+        return response(HttpStatus.FORBIDDEN, exception.getMessage(), Map.of());
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
