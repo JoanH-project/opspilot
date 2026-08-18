@@ -1,6 +1,7 @@
 package com.opspilot.user;
 
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,6 +11,7 @@ public class User {
     private Long id;
     @Column(nullable = false, unique = true, length = 320)
     private String email;
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 60)
     private String passwordHash;
     @Column(nullable = false, length = 100)

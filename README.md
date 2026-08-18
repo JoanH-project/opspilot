@@ -51,6 +51,40 @@ Expected response:
 
 Flyway automatically applies `src/main/resources/db/migration/V1__init.sql` on startup.
 
+## Register, log in, and get the current user
+
+Set a strong JWT secret before running outside local development. The configured fallback is for local development only.
+
+```bash
+export JWT_SECRET='replace-with-a-long-random-secret-at-least-32-characters'
+export JWT_EXPIRATION_SECONDS=3600
+```
+
+Register a user:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"joan@example.com","password":"password123","name":"Joan"}'
+```
+
+Log in and copy the returned `accessToken`:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"joan@example.com","password":"password123"}'
+```
+
+Request the current user with the token:
+
+```bash
+curl http://localhost:8080/api/users/me \
+  -H 'Authorization: Bearer <accessToken>'
+```
+
+The API is stateless: use `Authorization: Bearer <accessToken>` on each protected request. Access tokens expire after `JWT_EXPIRATION_SECONDS` (one hour by default); refresh tokens are not part of this phase.
+
 ## Run tests
 
 ```bash

@@ -17,5 +17,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+app:
+  jwt:
+    # Development-only default. Set JWT_SECRET to a strong, unique value outside local development.
+    secret: ${JWT_SECRET:opspilot-development-only-jwt-secret-change-me-2026}
+    expiration-seconds: ${JWT_EXPIRATION_SECONDS:3600}
+
 server:
   port: ${SERVER_PORT:8080}

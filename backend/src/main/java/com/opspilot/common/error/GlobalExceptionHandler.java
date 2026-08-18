@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.opspilot.auth.DuplicateEmailException;
+import com.opspilot.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,6 +25,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     ResponseEntity<ApiError> handleDuplicateEmail(DuplicateEmailException exception) {
         return response(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception) {
+        return response(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {

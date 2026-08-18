@@ -77,10 +77,14 @@ class RegistrationTest {
     }
 
     private MockMvc mockMvc(UserStore store) {
-        AuthService service = new AuthService(store.repository(), PASSWORD_ENCODER);
+        AuthService service = new AuthService(store.repository(), PASSWORD_ENCODER, jwtService());
         return MockMvcBuilders.standaloneSetup(new AuthController(service))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+    }
+
+    private JwtService jwtService() {
+        return new JwtService("test-jwt-secret-at-least-thirty-two-characters-long", 3600);
     }
 
     private static org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder register(
