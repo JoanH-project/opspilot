@@ -8,6 +8,9 @@ import com.opspilot.auth.InvalidCredentialsException;
 import com.opspilot.workspace.InsufficientWorkspaceRoleException;
 import com.opspilot.workspace.WorkspaceNotFoundException;
 import com.opspilot.project.*;
+import com.opspilot.task.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -49,6 +52,8 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> archivedProject(ArchivedProjectException e) { return response(HttpStatus.CONFLICT,e.getMessage(),Map.of()); }
     @ExceptionHandler(InvalidProjectUpdateException.class)
     ResponseEntity<ApiError> invalidProjectUpdate(InvalidProjectUpdateException e) { return response(HttpStatus.BAD_REQUEST,e.getMessage(),Map.of()); }
+    @ExceptionHandler({TaskNotFoundException.class}) ResponseEntity<ApiError> taskNotFound(RuntimeException e){return response(HttpStatus.NOT_FOUND,e.getMessage(),Map.of());}
+    @ExceptionHandler({InvalidTaskAssigneeException.class,InvalidTaskUpdateException.class,MethodArgumentTypeMismatchException.class,HttpMessageNotReadableException.class}) ResponseEntity<ApiError> invalidTaskInput(Exception e){return response(HttpStatus.BAD_REQUEST,"Invalid request",Map.of());}
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());

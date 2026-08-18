@@ -1,0 +1,1 @@
+package com.opspilot.task; import java.util.List; import org.springframework.data.jpa.repository.JpaRepository; public interface TaskRepository extends JpaRepository<Task,Long>{List<Task> findByProject_IdOrderByCreatedAtDesc(Long projectId);}

@@ -148,6 +148,20 @@ curl -X PATCH http://localhost:8080/api/projects/1 -H "Authorization: Bearer $AC
 curl -X POST http://localhost:8080/api/projects/1/archive -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
+## Tasks
+
+```bash
+# Create, or create unassigned by omitting assigneeId
+curl -X POST http://localhost:8080/api/projects/1/tasks -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"title":"Fix login bug","priority":"HIGH","assigneeId":2,"dueDate":"2026-08-25"}'
+# List and filter
+curl http://localhost:8080/api/projects/1/tasks -H "Authorization: Bearer $ACCESS_TOKEN"
+curl 'http://localhost:8080/api/projects/1/tasks?status=TODO&priority=HIGH' -H "Authorization: Bearer $ACCESS_TOKEN"
+# Get, update, unassign, and change status
+curl http://localhost:8080/api/tasks/1 -H "Authorization: Bearer $ACCESS_TOKEN"
+curl -X PATCH http://localhost:8080/api/tasks/1 -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"title":"Updated task","clearAssignee":true,"clearDueDate":true}'
+curl -X PATCH http://localhost:8080/api/tasks/1/status -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' -d '{"status":"IN_PROGRESS"}'
+```
+
 ## Run tests
 
 ```bash

@@ -1,0 +1,1 @@
+package com.opspilot.task.dto; import com.opspilot.task.TaskStatus; import jakarta.validation.constraints.NotNull; public record UpdateTaskStatusRequest(@NotNull(message="Task status is required") TaskStatus status){}

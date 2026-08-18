@@ -1,0 +1,1 @@
+package com.opspilot.task.dto; import com.opspilot.user.User; public record TaskUserResponse(Long id,String email,String name){public static TaskUserResponse from(User u){return u==null?null:new TaskUserResponse(u.getId(),u.getEmail(),u.getName());}}

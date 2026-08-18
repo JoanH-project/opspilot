@@ -1,0 +1,7 @@
+package com.opspilot.task; import java.util.*; import com.opspilot.task.dto.*; import jakarta.validation.Valid; import org.springframework.http.*; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*;
+@RestController public class TaskController {private final TaskService s;public TaskController(TaskService s){this.s=s;}private Long u(Authentication a){return(Long)a.getPrincipal();}
+@PostMapping("/api/projects/{projectId}/tasks") public ResponseEntity<TaskResponse> create(Authentication a,@PathVariable Long projectId,@Valid @RequestBody CreateTaskRequest r){return ResponseEntity.status(HttpStatus.CREATED).body(s.create(projectId,u(a),r));}
+@GetMapping("/api/projects/{projectId}/tasks") public List<TaskResponse> list(Authentication a,@PathVariable Long projectId,@RequestParam(required=false) TaskStatus status,@RequestParam(required=false) TaskPriority priority,@RequestParam(required=false) Long assigneeId){return s.list(projectId,u(a),status,priority,assigneeId);}
+@GetMapping("/api/tasks/{taskId}") public TaskResponse get(Authentication a,@PathVariable Long taskId){return s.get(taskId,u(a));}
+@PatchMapping("/api/tasks/{taskId}") public TaskResponse update(Authentication a,@PathVariable Long taskId,@Valid @RequestBody UpdateTaskRequest r){return s.update(taskId,u(a),r);}
+@PatchMapping("/api/tasks/{taskId}/status") public TaskResponse status(Authentication a,@PathVariable Long taskId,@Valid @RequestBody UpdateTaskStatusRequest r){return s.status(taskId,u(a),r);}}

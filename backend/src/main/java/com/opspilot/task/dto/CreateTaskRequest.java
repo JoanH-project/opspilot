@@ -1,0 +1,2 @@
+package com.opspilot.task.dto; import java.time.LocalDate; import com.opspilot.task.TaskPriority; import jakarta.validation.constraints.*;
+public record CreateTaskRequest(@NotBlank(message="Task title is required") @Size(max=200,message="Task title must not exceed 200 characters") String title,@Size(max=5000,message="Task description must not exceed 5000 characters") String description,TaskPriority priority,Long assigneeId,LocalDate dueDate){}
