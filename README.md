@@ -1,6 +1,6 @@
 # OpsPilot
 
-OpsPilot is a modular Spring Boot backend foundation for an operations workspace. Phase 1 intentionally contains only infrastructure: a MySQL connection, Flyway migrations, and a health endpoint.
+OpsPilot is a modular Spring Boot backend for authenticated operations workspaces, projects, tasks, documents, activity feeds, and dashboard aggregation.
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ Expected response:
 {"status":"UP"}
 ```
 
-Flyway automatically applies `src/main/resources/db/migration/V1__init.sql` on startup.
+Flyway automatically applies the versioned migrations in `src/main/resources/db/migration` on startup.
 
 ## Register, log in, and get the current user
 
@@ -172,6 +172,27 @@ curl -X PATCH http://localhost:8080/api/documents/1 -H "Authorization: Bearer $A
 curl -X POST http://localhost:8080/api/documents/1/archive -H "Authorization: Bearer $ACCESS_TOKEN"
 curl 'http://localhost:8080/api/workspaces/1/documents?status=ARCHIVED' -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
+
+## Activity feed and dashboard
+
+```bash
+# Newest workspace activities first (default limit: 20)
+curl http://localhost:8080/api/workspaces/1/activities \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Request a smaller activity page (valid range: 1–100)
+curl 'http://localhost:8080/api/workspaces/1/activities?limit=10' \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Workspace project/task/document counts plus the 20 most recent activities
+curl http://localhost:8080/api/workspaces/1/dashboard \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Activity logs are immutable and are written in the same database transaction as the
+corresponding workspace, project, task, or document change. Dashboard totals use
+database aggregate queries. A task is overdue when its due date is before today and
+its status is not `DONE`.
 
 ## Run tests
 

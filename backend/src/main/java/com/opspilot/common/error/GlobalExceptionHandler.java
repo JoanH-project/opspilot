@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.opspilot.auth.DuplicateEmailException;
 import com.opspilot.auth.InvalidCredentialsException;
+import com.opspilot.activity.InvalidActivityLimitException;
 import com.opspilot.workspace.InsufficientWorkspaceRoleException;
 import com.opspilot.workspace.WorkspaceNotFoundException;
 import com.opspilot.project.*;
@@ -59,6 +60,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DocumentAccessDeniedException.class) ResponseEntity<ApiError> documentDenied(DocumentAccessDeniedException e){return response(HttpStatus.FORBIDDEN,e.getMessage(),Map.of());}
     @ExceptionHandler(ArchivedDocumentException.class) ResponseEntity<ApiError> archivedDocument(ArchivedDocumentException e){return response(HttpStatus.CONFLICT,e.getMessage(),Map.of());}
     @ExceptionHandler(InvalidDocumentUpdateException.class) ResponseEntity<ApiError> invalidDocument(InvalidDocumentUpdateException e){return response(HttpStatus.BAD_REQUEST,e.getMessage(),Map.of());}
+    @ExceptionHandler(InvalidActivityLimitException.class)
+    ResponseEntity<ApiError> invalidActivityLimit(InvalidActivityLimitException exception) {
+        return response(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());

@@ -11,6 +11,8 @@ import java.util.*;
 
 import com.opspilot.user.User;
 import com.opspilot.user.UserRepository;
+import com.opspilot.activity.ActivityLogService;
+import com.opspilot.activity.ActivityType;
 import com.opspilot.workspace.dto.CreateWorkspaceRequest;
 import com.opspilot.workspace.dto.UpdateWorkspaceRequest;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,25 @@ class WorkspaceServiceTest {
         assertEquals(1, store.workspaces.size());
         assertEquals(1, store.memberships.size());
         assertEquals(WorkspaceRole.OWNER, store.memberships.get(0).getRole());
+        org.mockito.Mockito.verify(store.activities).record(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(owner),
+                org.mockito.ArgumentMatchers.eq(ActivityType.WORKSPACE_CREATED),
+                org.mockito.ArgumentMatchers.eq("WORKSPACE"), org.mockito.ArgumentMatchers.eq(response.id()),
+                org.mockito.ArgumentMatchers.eq("Owner created workspace Joan Workspace"));
+    }
+
+    @Test
+    void activityPersistenceFailurePropagatesFromWorkspaceCreation() throws Exception {
+        Store store = new Store();
+        User owner = store.addUser("owner@example.com", "Owner");
+        org.mockito.Mockito.doThrow(new IllegalStateException("activity write failed"))
+                .when(store.activities)
+                .record(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+
+        assertThrows(IllegalStateException.class, () -> store.service().createWorkspace(
+                owner.getId(), new CreateWorkspaceRequest("Rollback Check")));
     }
 
     @Test
@@ -97,10 +118,12 @@ class WorkspaceServiceTest {
         final List<User> users = new ArrayList<>();
         final List<Workspace> workspaces = new ArrayList<>();
         final List<WorkspaceMember> memberships = new ArrayList<>();
+        final ActivityLogService activities = org.mockito.Mockito.mock(ActivityLogService.class);
         long nextUserId = 1, nextWorkspaceId = 1, nextMembershipId = 1;
 
         WorkspaceService service() {
-            return new WorkspaceService(workspaceRepository(), memberRepository(), userRepository(), new WorkspaceAccessService(memberRepository()));
+            return new WorkspaceService(workspaceRepository(), memberRepository(), userRepository(),
+                    new WorkspaceAccessService(memberRepository()), activities);
         }
         User addUser(String email, String name) throws Exception {
             User user = new User(email, "hash", name);

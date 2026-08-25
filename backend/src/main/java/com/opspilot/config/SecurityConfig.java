@@ -4,6 +4,7 @@ import com.opspilot.security.JwtAuthenticationFilter;
 import com.opspilot.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import java.time.Clock;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,6 +30,9 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+    @Bean
+    Clock clock() { return Clock.systemUTC(); }
 
     @Bean
     BCryptPasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
