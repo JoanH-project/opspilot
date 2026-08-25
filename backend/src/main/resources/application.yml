@@ -18,6 +18,8 @@ spring:
     locations: classpath:db/migration
 
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   jwt:
     # Development-only default. Set JWT_SECRET to a strong, unique value outside local development.
     secret: ${JWT_SECRET:opspilot-development-only-jwt-secret-change-me-2026}

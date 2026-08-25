@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
 > **Updated:** 2026-08-25
-> **Current Phase:** Phase 8 — Activity Logs + Dashboard Aggregation complete
+> **Current Milestone:** V1 Backend Freeze / Frontend Integration
 > **Overall Progress:** OpsPilot complete target ≈ 42%; V1 ≈ 65–70%; V1 backend feature implementation ≈ 100%
-> **Current Sprint:** V1 Backend Freeze, frontend API contract review, and frontend/QA tracks in parallel
-> **Next Milestone:** V1 Backend Freeze → React/TypeScript full-stack integration
+> **Current Sprint:** Frozen V1 backend contract and React/TypeScript frontend integration
+> **Next Major Implementation:** React + TypeScript frontend
 
 ## 1. Project goal
 
@@ -46,6 +46,8 @@ Phases 1–8 have been:
 Phase 8 has been implemented, automatically tested, verified against real MySQL/Flyway V7, and exercised through JWT-authenticated HTTP flows. Verified behavior includes transactional activity recording, feed limits and ordering, dashboard aggregation, overdue-task rules, archive idempotency, tenant isolation, and persisted activity rows.
 
 The V1 backend feature implementation is essentially complete. The next step is V1 Backend Freeze and frontend API contract review; no later backend or AI phase has started.
+
+The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or explicitly agreed contract changes. The shared frontend reference is `docs/API_CONTRACT.md`.
 
 ### Phase 8 completion rule
 

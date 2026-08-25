@@ -37,6 +37,10 @@ mvn spring-boot:run
 
 The application connects to `localhost:3306` by default. Override database settings with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD` when necessary.
 
+Local browser development allows `http://localhost:5173` by default. Override the
+comma-separated origin allow-list with `CORS_ALLOWED_ORIGINS` when needed. The
+frozen V1 frontend contract is documented in `docs/API_CONTRACT.md`.
+
 Once running, verify the endpoint:
 
 ```bash
