@@ -11,3 +11,11 @@ backend/target/
 
 # Local environment overrides
 .env
+
+# Frontend (when added)
+node_modules/
+dist/
+build/
+
+# Local tooling (not part of the repo)
+.tools/

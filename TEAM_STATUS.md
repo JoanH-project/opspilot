@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | Joan | Backend / Architecture | V1 Backend Freeze / API Contract Review | Done | `main` / V1 API frozen | Controllers, DTOs, validation, errors, auth/bootstrap, authorization, list scale and real CORS preflight reviewed; `mvn clean test` PASS (38 tests); `mvn package` PASS | Frontend may implement against `docs/API_CONTRACT.md` | 2026-08-25 |
 | Member A | Frontend / Product | V1 frontend foundation | Ready | — | — | Read roadmap/API and begin scoped frontend branch | 2026-08-25 |
-| Member B | QA / DevOps | Fresh-clone / smoke-test / CI preparation | Ready | — | — | Validate onboarding and propose scoped CI/smoke checks | 2026-08-25 |
+| Member B | QA / DevOps | Q1 — Onboarding / CI / API Smoke Baseline | Review | `chore/dev-onboarding` / PR pending | `mvn clean test` PASS (38 tests); `mvn package` PASS; Docker local run not verified (Docker unavailable in current environment) | README, ENVIRONMENT, API_SMOKE_TEST, backend CI workflow ready for Joan review | 2026-08-26 |
 
 ## Update rule
 

@@ -4,44 +4,40 @@ OpsPilot is a modular Spring Boot backend for authenticated operations workspace
 
 ## Prerequisites
 
-- Java 21
-- Maven 3.9+
-- Docker Desktop (or another Docker Compose-compatible runtime)
+- **Java 21** — the backend targets Java 21 (`backend/pom.xml`). A newer locally installed JDK is fine; Maven compiles with `--release 21`.
+- **Maven 3.9+**
+- **Docker Desktop** (or another Docker Compose-compatible runtime) for local MySQL
 
-## Start MySQL
+No Node.js setup is required for the current backend-only repository.
 
-From the repository root, choose local development passwords and export them for Docker Compose and the backend:
+## Quick start (fresh clone)
 
 ```bash
-export DB_NAME=opspilot
-export DB_USERNAME=opspilot
-export DB_PASSWORD='choose-a-local-development-password'
-export MYSQL_ROOT_PASSWORD='choose-a-different-root-password'
+git clone https://github.com/JoanH-project/opspilot.git
+cd opspilot
+cp .env.example .env          # edit passwords locally; do not commit .env
 docker compose up -d
+docker compose ps             # wait until mysql is healthy
 ```
 
-Check that MySQL is ready:
+Export the same database password for the backend, then start it:
 
 ```bash
-docker compose ps
-```
-
-## Run the backend
-
-Keep `DB_PASSWORD` exported from the previous step, then run:
-
-```bash
+# macOS / Linux
+export DB_PASSWORD='your-local-password-from-.env'
 cd backend
 mvn spring-boot:run
 ```
 
-The application connects to `localhost:3306` by default. Override database settings with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD` when necessary.
+**Windows PowerShell:**
 
-Local browser development allows `http://localhost:5173` by default. Override the
-comma-separated origin allow-list with `CORS_ALLOWED_ORIGINS` when needed. The
-frozen V1 frontend contract is documented in `docs/API_CONTRACT.md`.
+```powershell
+$env:DB_PASSWORD = 'your-local-password-from-.env'
+cd backend
+mvn spring-boot:run
+```
 
-Once running, verify the endpoint:
+Verify health:
 
 ```bash
 curl http://localhost:8080/api/health
@@ -53,11 +49,25 @@ Expected response:
 {"status":"UP"}
 ```
 
-Flyway automatically applies the versioned migrations in `src/main/resources/db/migration` on startup.
+Flyway automatically applies the versioned migrations in `backend/src/main/resources/db/migration` on startup.
+
+## Environment configuration
+
+See `docs/ENVIRONMENT.md` for the full variable reference.
+
+Minimum for local MySQL + backend:
+
+| Variable | Required | Notes |
+|---|---|---|
+| `DB_PASSWORD` | Yes | Must match Docker Compose and backend |
+| `MYSQL_ROOT_PASSWORD` | Yes | Required by Docker Compose only |
+| `JWT_SECRET` | Recommended outside local dev | Backend has a development-only fallback |
+
+Copy `.env.example` to `.env` for Docker Compose. Export `DB_PASSWORD` in your shell (or IDE run config) before starting the backend.
 
 ## Register, log in, and get the current user
 
-Set a strong JWT secret before running outside local development. The configured fallback is for local development only.
+For non-local deployments, set a strong JWT secret:
 
 ```bash
 export JWT_SECRET='replace-with-a-long-random-secret-at-least-32-characters'
@@ -87,7 +97,7 @@ curl http://localhost:8080/api/users/me \
   -H 'Authorization: Bearer <accessToken>'
 ```
 
-The API is stateless: use `Authorization: Bearer <accessToken>` on each protected request. Access tokens expire after `JWT_EXPIRATION_SECONDS` (one hour by default); refresh tokens are not part of this phase.
+The API is stateless: use `Authorization: Bearer <accessToken>` on each protected request. Access tokens expire after `JWT_EXPIRATION_SECONDS` (one hour by default); refresh tokens are not part of V1.
 
 ## Workspaces
 
@@ -198,14 +208,28 @@ corresponding workspace, project, task, or document change. Dashboard totals use
 database aggregate queries. A task is overdue when its due date is before today and
 its status is not `DONE`.
 
-## Run tests
+## Tests and build
+
+From `backend/`:
 
 ```bash
-cd backend
-mvn test
+mvn clean test     # 38 automated tests; no running MySQL required
+mvn package        # builds the runnable JAR after tests pass
 ```
 
-The health endpoint test uses Spring MVC's test support and does not require a running MySQL instance.
+CI uses `mvn clean verify`, which runs tests and packages in one Maven lifecycle.
+
+## Documentation map
+
+| Document | Purpose |
+|---|---|
+| `docs/API_CONTRACT.md` | Frozen V1 frontend/backend API contract |
+| `docs/API_SMOKE_TEST.md` | Human end-to-end backend verification checklist |
+| `docs/ENVIRONMENT.md` | Environment variable reference |
+| `AGENTS.md` | Long-lived engineering rules |
+| `PROJECT_ROADMAP.md` | Architecture, milestones, team ownership |
+
+Frontend developers must implement against `docs/API_CONTRACT.md` and must not guess or change backend contracts without agreement.
 
 ## Stop MySQL
 
