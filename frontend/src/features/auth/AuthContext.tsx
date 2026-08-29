@@ -10,23 +10,17 @@ import {
 import { authApi } from '../../api/auth';
 import type { LoginRequest, RegisterRequest, User } from '../../types/auth';
 import { AuthContext, type AuthContextValue } from './context';
-import {
-  getStoredToken,
-  getStoredUser,
-  persistToken,
-  persistUser,
-} from './authStorage';
+import { getStoredToken, persistToken } from './authStorage';
 
 export function AuthProvider({ children }: { children: ReactNode }): ReactElement {
   const [token, setToken] = useState<string | null>(getStoredToken());
-  const [currentUser, setCurrentUser] = useState<User | null>(getStoredUser());
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const logout = useCallback((): void => {
     setToken(null);
     setCurrentUser(null);
     persistToken(null);
-    persistUser(null);
   }, []);
 
   const refreshSession = useCallback(async (): Promise<void> => {
@@ -36,7 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
       setCurrentUser(null);
       setToken(null);
       persistToken(null);
-      persistUser(null);
       setIsLoading(false);
       return;
     }
@@ -46,12 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
       setToken(storedToken);
       setCurrentUser(user);
       persistToken(storedToken);
-      persistUser(user);
     } catch {
       setToken(null);
       setCurrentUser(null);
       persistToken(null);
-      persistUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
 
     const user = await authApi.getCurrentUser(nextToken);
     setCurrentUser(user);
-    persistUser(user);
   }, []);
 
   const register = useCallback(async (request: RegisterRequest): Promise<void> => {
