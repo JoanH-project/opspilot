@@ -11,6 +11,11 @@ backend/target/
 
 # Local environment overrides
 .env
+frontend/.env
+
+# Logs
+logs/
+*.log
 
 # Frontend (when added)
 node_modules/

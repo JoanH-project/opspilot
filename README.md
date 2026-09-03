@@ -1,14 +1,21 @@
 # OpsPilot
 
-OpsPilot is a modular Spring Boot backend for authenticated operations workspaces, projects, tasks, documents, activity feeds, and dashboard aggregation.
+OpsPilot is a full-stack operations platform: a Spring Boot backend with JWT authentication, workspace RBAC, and a React + TypeScript frontend (Vite).
+
+```text
+MySQL (:3306)
+      ↓
+Spring Boot (:8080)
+      ↓
+React / Vite (:5173)
+```
 
 ## Prerequisites
 
-- **Java 21** — the backend targets Java 21 (`backend/pom.xml`). A newer locally installed JDK is fine; Maven compiles with `--release 21`.
+- **Java 21** — backend target (`backend/pom.xml`). A newer locally installed JDK is fine; Maven compiles with `--release 21`.
 - **Maven 3.9+**
 - **Docker Desktop** (or another Docker Compose-compatible runtime) for local MySQL
-
-No Node.js setup is required for the current backend-only repository.
+- **Node.js 20+** and **npm** for the frontend
 
 ## Quick start (fresh clone)
 
@@ -20,7 +27,9 @@ docker compose up -d
 docker compose ps             # wait until mysql is healthy
 ```
 
-Export the same database password for the backend, then start it:
+### 1. Start the backend
+
+Export the database password, then run Spring Boot:
 
 ```bash
 # macOS / Linux
@@ -51,19 +60,41 @@ Expected response:
 
 Flyway automatically applies the versioned migrations in `backend/src/main/resources/db/migration` on startup.
 
+### 2. Start the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+The frontend expects:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+See `frontend/README.md` for frontend-specific development notes.
+
 ## Environment configuration
 
 See `docs/ENVIRONMENT.md` for the full variable reference.
 
-Minimum for local MySQL + backend:
+Minimum for local full-stack development:
 
 | Variable | Required | Notes |
 |---|---|---|
 | `DB_PASSWORD` | Yes | Must match Docker Compose and backend |
 | `MYSQL_ROOT_PASSWORD` | Yes | Required by Docker Compose only |
+| `VITE_API_BASE_URL` | Recommended | Defaults to `http://localhost:8080` in frontend code |
 | `JWT_SECRET` | Recommended outside local dev | Backend has a development-only fallback |
 
-Copy `.env.example` to `.env` for Docker Compose. Export `DB_PASSWORD` in your shell (or IDE run config) before starting the backend.
+Copy the repository root `.env.example` to `.env` for Docker Compose. Copy `frontend/.env.example` to `frontend/.env` for the Vite app. Export `DB_PASSWORD` in your shell (or IDE run config) before starting the backend.
 
 ## Register, log in, and get the current user
 
@@ -210,22 +241,39 @@ its status is not `DONE`.
 
 ## Tests and build
 
-From `backend/`:
+Backend (`backend/`):
 
 ```bash
 mvn clean test     # 38 automated tests; no running MySQL required
 mvn package        # builds the runnable JAR after tests pass
 ```
 
-CI uses `mvn clean verify`, which runs tests and packages in one Maven lifecycle.
+Backend CI uses `mvn clean verify`.
+
+Frontend (`frontend/`):
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
+## Manual verification
+
+| Checklist | Purpose |
+|---|---|
+| `docs/API_SMOKE_TEST.md` | Backend HTTP/JWT end-to-end verification |
+| `docs/FRONTEND_SMOKE_TEST.md` | Frontend F1 browser verification (Register, Login, ProtectedRoute, CORS, etc.) |
 
 ## Documentation map
 
 | Document | Purpose |
 |---|---|
 | `docs/API_CONTRACT.md` | Frozen V1 frontend/backend API contract |
-| `docs/API_SMOKE_TEST.md` | Human end-to-end backend verification checklist |
+| `docs/API_SMOKE_TEST.md` | Human backend verification checklist |
+| `docs/FRONTEND_SMOKE_TEST.md` | Human frontend F1 verification checklist |
 | `docs/ENVIRONMENT.md` | Environment variable reference |
+| `frontend/README.md` | Frontend-specific setup and development |
 | `AGENTS.md` | Long-lived engineering rules |
 | `PROJECT_ROADMAP.md` | Architecture, milestones, team ownership |
 
