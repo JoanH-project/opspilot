@@ -32,6 +32,14 @@ The backend does not load `.env` automatically. Export the same database values 
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:5173` | Comma-separated browser origin allow-list |
 | `SERVER_PORT` | No | `8080` | HTTP port for the backend |
 
+## Frontend (Vite)
+
+Copy `frontend/.env.example` to `frontend/.env`. The frontend does not load the repository root `.env`.
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `VITE_API_BASE_URL` | No | `http://localhost:8080` when unset in code | Backend API base URL for browser requests |
+
 ## Notes
 
 - Never commit real secrets. `.env` is gitignored.
