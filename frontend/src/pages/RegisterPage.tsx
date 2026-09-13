@@ -81,8 +81,13 @@ export function RegisterPage(): ReactElement {
       const apiError = error as ApiError;
       const fieldErrors = apiError.fieldErrors ?? {};
       const nextFormErrors: FormErrors = {
-        form: fieldErrors.email ?? fieldErrors.password ?? apiError.message ?? 'Registration failed.',
+        form:
+          fieldErrors.name ?? fieldErrors.email ?? fieldErrors.password ?? apiError.message ?? 'Registration failed.',
       };
+
+      if (fieldErrors.name) {
+        nextFormErrors.name = fieldErrors.name;
+      }
 
       if (fieldErrors.email) {
         nextFormErrors.email = fieldErrors.email;

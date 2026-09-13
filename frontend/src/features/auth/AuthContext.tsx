@@ -50,13 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
 
   const login = useCallback(async (credentials: LoginRequest): Promise<void> => {
     const response = await authApi.login(credentials);
-    const nextToken = response.accessToken;
+    const temporaryToken = response.accessToken;
 
-    setToken(nextToken);
-    persistToken(nextToken);
-
-    const user = await authApi.getCurrentUser(nextToken);
-    setCurrentUser(user);
+    try {
+      const user = await authApi.getCurrentUser(temporaryToken);
+      setToken(temporaryToken);
+      setCurrentUser(user);
+      persistToken(temporaryToken);
+    } catch (error) {
+      setToken(null);
+      setCurrentUser(null);
+      persistToken(null);
+      throw error;
+    }
   }, []);
 
   const register = useCallback(async (request: RegisterRequest): Promise<void> => {
