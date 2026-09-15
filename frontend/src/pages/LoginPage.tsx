@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactElement } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/useAuth';
 import type { ApiError } from '../types/auth';
@@ -129,7 +129,7 @@ export function LoginPage(): ReactElement {
         </form>
 
         <p className="auth-switch">
-          Need an account? <a href="/register">Create one</a>
+          Need an account? <Link to="/register">Create one</Link>
         </p>
       </div>
     </div>

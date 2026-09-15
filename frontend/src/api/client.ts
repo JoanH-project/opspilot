@@ -16,6 +16,17 @@ export type ApiRequestOptions = RequestInit & {
   token?: string | null;
 };
 
+function isApiError(value: unknown): value is ApiError {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'status' in value &&
+    typeof (value as { status?: unknown }).status === 'number' &&
+    'message' in value &&
+    typeof (value as { message?: unknown }).message === 'string'
+  );
+}
+
 function normalizeApiError(response: Response, payload: unknown): ApiError {
   const errorPayload = (payload ?? {}) as Partial<ApiError> & {
     fieldErrors?: Record<string, string>;
@@ -73,7 +84,7 @@ export async function apiRequest<T>(
 
     return parsedBody as T;
   } catch (error) {
-    if (error instanceof Error && 'status' in error && typeof error.status === 'number') {
+    if (isApiError(error)) {
       throw error;
     }
 
