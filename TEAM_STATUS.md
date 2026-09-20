@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|
 | Joan | Backend / Architecture | V1 Backend Freeze / API Contract Review | Done | `main` / V1 API frozen | Controllers, DTOs, validation, errors, auth/bootstrap, authorization, list scale and real CORS preflight reviewed; `mvn clean test` PASS (38 tests); `mvn package` PASS | Frontend may implement against `docs/API_CONTRACT.md` | 2026-08-25 |
 | Member A | Frontend / Product | F1 Follow-up — Auth Stabilization | Review | `fix/frontend-auth-stabilization` | `npm run lint`; `npm run build`; `git diff --check`; browser integration not available in this environment | Ready for Joan integration verification; F2 not started. | 2026-09-13 |
-| Member B | QA / DevOps | Q2 — Frontend CI + Full-stack Onboarding | Review | `ci/frontend-checks` / PR pending | Frontend: `npm ci`, `npm run lint`, `npm run build` PASS; Backend: `mvn clean verify` PASS; Docker/full-stack browser smoke not run (Docker unavailable locally) | Frontend CI workflow, full-stack README, FRONTEND_SMOKE_TEST ready for Joan review | 2026-09-03 |
+| Member B | QA / DevOps | Q3 — Auth Regression Checklist (post PR #4) | Review | `docs/auth-regression-q3` / PR pending | Docs only: added `docs/AUTH_REGRESSION.md` (R1–R4). Q2 already merged (PR #3). Browser regression execution pending (no local Docker/browser full-stack run this round). Do not treat as browser PASS. | Auth regression doc ready for Joan review; F2 can proceed in parallel | 2026-09-20 |
 
 ## Update rule
 

@@ -12,6 +12,8 @@ Reusable manual browser checklist for Frontend F1 (Auth + App Shell). Run this a
 
 Use a fresh email per run when registering, for example `f1-smoke-<timestamp>@example.com`.
 
+For the four focused post–PR #4 auth regressions (409 / 401 / network / login-then-`/users/me` failure), use `docs/AUTH_REGRESSION.md` instead of re-running this entire checklist.
+
 ---
 
 ## Before you start
