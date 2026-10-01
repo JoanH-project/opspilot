@@ -264,6 +264,7 @@ npm run build
 |---|---|
 | `docs/API_SMOKE_TEST.md` | Backend HTTP/JWT end-to-end verification |
 | `docs/FRONTEND_SMOKE_TEST.md` | Frontend F1 browser verification (Register, Login, ProtectedRoute, CORS, etc.) |
+| `docs/AUTH_REGRESSION.md` | Focused auth regressions after PR #4 (409 / 401 / network / `/users/me` token commit) |
 
 ## Documentation map
 
@@ -272,6 +273,7 @@ npm run build
 | `docs/API_CONTRACT.md` | Frozen V1 frontend/backend API contract |
 | `docs/API_SMOKE_TEST.md` | Human backend verification checklist |
 | `docs/FRONTEND_SMOKE_TEST.md` | Human frontend F1 verification checklist |
+| `docs/AUTH_REGRESSION.md` | Auth Stabilization regression checks (post PR #4) |
 | `docs/ENVIRONMENT.md` | Environment variable reference |
 | `frontend/README.md` | Frontend-specific setup and development |
 | `AGENTS.md` | Long-lived engineering rules |
