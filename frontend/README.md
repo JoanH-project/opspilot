@@ -1,6 +1,14 @@
 # OpsPilot Frontend
 
-This frontend is the V1 React + TypeScript foundation for OpsPilot. It includes authentication, protected routing, and a minimal app shell ready for later dashboard and workspace flows.
+This frontend implements the V1 authentication flow, workspace bootstrap, workspace switching, and the live workspace Dashboard.
+
+After sign-in, the app loads the member's workspaces:
+
+- No workspaces: create the first workspace.
+- One workspace: open it automatically.
+- Multiple workspaces: restore the last valid selection or ask the user to choose.
+
+The selected workspace is encoded in the URL at `/app/:workspaceId/dashboard`; its last valid ID is kept in `localStorage`. The Dashboard reads live counts and recent activity from the backend. Project, task, and document management remain later frontend phases.
 
 ## Local development
 

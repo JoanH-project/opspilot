@@ -11,6 +11,7 @@ import { authApi } from '../../api/auth';
 import type { LoginRequest, RegisterRequest, User } from '../../types/auth';
 import { AuthContext, type AuthContextValue } from './context';
 import { getStoredToken, persistToken } from './authStorage';
+import { persistWorkspaceId } from '../workspaces/workspaceStorage';
 
 export function AuthProvider({ children }: { children: ReactNode }): ReactElement {
   const [token, setToken] = useState<string | null>(getStoredToken());
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
     setToken(null);
     setCurrentUser(null);
     persistToken(null);
+    persistWorkspaceId(null);
   }, []);
 
   const refreshSession = useCallback(async (): Promise<void> => {

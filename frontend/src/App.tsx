@@ -5,8 +5,8 @@ import './App.css';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './features/auth/AuthContext';
 import { useAuth } from './features/auth/useAuth';
-import { AppShell } from './layouts/AppShell';
-import { DashboardPage } from './pages/DashboardPage';
+import { WorkspaceBootstrap } from './features/workspaces/WorkspaceBootstrap';
+import { WorkspaceDashboardRoute } from './features/workspaces/WorkspaceDashboardRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -19,60 +19,37 @@ function AppRoutes(): ReactElement {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+      <Route path="/" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />
 
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to="/app" replace /> : <LoginPage />}
       />
 
       <Route
         path="/register"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
+        element={isAuthenticated ? <Navigate to="/app" replace /> : <RegisterPage />}
       />
 
       <Route
-        path="/dashboard"
+        path="/app"
         element={
           <ProtectedRoute>
-            <AppShell>
-              <DashboardPage />
-            </AppShell>
+            <WorkspaceBootstrap />
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/projects"
+        path="/app/:workspaceId/dashboard"
         element={
           <ProtectedRoute>
-            <AppShell>
-              <div className="page-panel">
-                <p className="eyebrow">Projects</p>
-                <h1>Projects</h1>
-                <p>Project management will be added in a later phase.</p>
-              </div>
-            </AppShell>
+            <WorkspaceDashboardRoute />
           </ProtectedRoute>
         }
       />
 
-      <Route
-        path="/documents"
-        element={
-          <ProtectedRoute>
-            <AppShell>
-              <div className="page-panel">
-                <p className="eyebrow">Documents</p>
-                <h1>Documents</h1>
-                <p>Document management will be added in a later phase.</p>
-              </div>
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />
     </Routes>
   );
 }

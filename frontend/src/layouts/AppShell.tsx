@@ -1,19 +1,20 @@
 import type { ReactElement, ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/useAuth';
+import { persistWorkspaceId } from '../features/workspaces/workspaceStorage';
+import type { WorkspaceSummary } from '../types/workspace';
 
 type AppShellProps = {
+  currentWorkspace: WorkspaceSummary;
+  workspaces: WorkspaceSummary[];
   children: ReactNode;
 };
 
-const navigationItems = [
-  { label: 'Dashboard', to: '/dashboard' },
-  { label: 'Projects', to: '/projects' },
-  { label: 'Documents', to: '/documents' },
-];
+const navigationItems = [{ label: 'Dashboard', to: 'dashboard' }];
 
-export function AppShell({ children }: AppShellProps): ReactElement {
+export function AppShell({ children, currentWorkspace, workspaces }: AppShellProps): ReactElement {
+  const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
 
   return (
@@ -23,15 +24,34 @@ export function AppShell({ children }: AppShellProps): ReactElement {
           <div className="brand-mark">O</div>
           <div>
             <strong>OpsPilot</strong>
-            <small>Workspace</small>
+            <small>{currentWorkspace.role}</small>
           </div>
         </div>
+
+        <label className="workspace-switcher">
+          <span>Workspace</span>
+          <select
+            aria-label="Current workspace"
+            value={currentWorkspace.id}
+            onChange={(event) => {
+              const nextWorkspaceId = Number(event.target.value);
+              persistWorkspaceId(nextWorkspaceId);
+              navigate(`/app/${nextWorkspaceId}/dashboard`);
+            }}
+          >
+            {workspaces.map((workspace) => (
+              <option key={workspace.id} value={workspace.id}>
+                {workspace.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {navigationItems.map((item) => (
             <NavLink
               key={item.to}
-              to={item.to}
+              to={`/app/${currentWorkspace.id}/${item.to}`}
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
             >
               {item.label}
@@ -44,7 +64,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         <header className="topbar">
           <div>
             <p className="eyebrow">Operations</p>
-            <h2>Team workspace</h2>
+            <h2>{currentWorkspace.name}</h2>
           </div>
 
           <div className="topbar-actions">
