@@ -7,6 +7,31 @@ export type WorkspaceSummary = {
   createdAt: string;
 };
 
+export type WorkspaceOwner = {
+  id: number;
+  email: string;
+  name: string;
+};
+
+export type WorkspaceResponse = {
+  id: number;
+  name: string;
+  owner: WorkspaceOwner;
+  role: WorkspaceRole;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceMemberResponse = {
+  user: WorkspaceOwner;
+  role: WorkspaceRole;
+  joinedAt: string;
+};
+
+export type UpdateWorkspaceRequest = {
+  name: string;
+};
+
 export type ActivityResponse = {
   id: number;
   type: string;

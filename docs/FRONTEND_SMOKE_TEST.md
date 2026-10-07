@@ -8,7 +8,7 @@ Reusable manual browser checklist for authentication, workspace bootstrap, and D
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8080`
 
-**Token storage key:** `opspilot_access_token` in `localStorage`.
+**Token storage key:** `opspilot_access_token` in `localStorage`. The last workspace preference uses `opspilot_last_workspace_id_user_<userId>`; it is scoped to the signed-in user.
 
 Use a fresh email per run when registering, for example `f2-smoke-<timestamp>@example.com`.
 
@@ -111,7 +111,7 @@ Session should restore from the stored token without requiring login again.
 |---|---|---|
 | 1 | Log in again | Workspace Dashboard visible |
 | 2 | Click **Logout** in the app shell | Returns to unauthenticated state |
-| 3 | Check `localStorage` | `opspilot_access_token` and `opspilot_last_workspace_id` removed |
+| 3 | Check `localStorage` | `opspilot_access_token` and the signed-in user's `opspilot_last_workspace_id_user_<userId>` removed |
 | 4 | Open `/app` | Redirects to `/login` |
 
 ---
@@ -124,11 +124,18 @@ Session should restore from the stored token without requiring login again.
 | Create first workspace | Submit a valid name | Workspace is created and its Dashboard opens |
 | One workspace | Open `/app` | The only workspace opens automatically |
 | Multiple workspaces, saved selection valid | Open `/app` | The saved workspace Dashboard opens |
-| Multiple workspaces, no valid saved selection | Clear `opspilot_last_workspace_id`, then open `/app` | Workspace chooser appears; no workspace is silently selected |
+| Multiple workspaces, no valid saved selection | Clear `opspilot_last_workspace_id_user_<userId>`, then open `/app` | Workspace chooser appears; no workspace is silently selected |
 | Switch workspace | Use the sidebar workspace selector | URL and displayed data change to the selected workspace |
+| Additional workspace | Use **Create workspace** in the shell or the `/app` chooser | Workspace is created and the new Dashboard opens |
+| Workspace details | Use **Workspace details** in the shell | Owner and read-only members with name, email, role, and joined date are displayed |
+| Rename as OWNER/ADMIN | Save a nonblank name of at most 100 characters | Shell/list names update; a 400 field error or 403 permission error preserves the entered value |
+| Rename as MEMBER | Open workspace details | Rename form is not shown |
 | Invalid workspace URL | Open `/app/999999/dashboard` for an inaccessible ID | Returns to `/app` and presents valid workspace options |
+| Dashboard 404 | Keep the workspace in `GET /api/workspaces` but make its Dashboard endpoint return 404 | Unavailable state stays actionable with a bounded retry; it does not repeatedly redirect to itself |
 
-Logout should remove both `opspilot_last_workspace_id` and `opspilot_access_token`.
+Repeat login with two accounts and confirm each user's last-workspace preference remains separate. Logout should remove the current user's scoped preference and `opspilot_access_token`.
+
+The automated F2 suite uses real React components/routes with mocks only at the API boundary: `cd frontend && npm test`.
 
 ---
 

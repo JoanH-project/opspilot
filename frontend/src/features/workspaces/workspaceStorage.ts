@@ -1,7 +1,21 @@
-export const WORKSPACE_STORAGE_KEY = 'opspilot_last_workspace_id';
+const LEGACY_WORKSPACE_STORAGE_KEY = 'opspilot_last_workspace_id';
+const USER_WORKSPACE_STORAGE_KEY_PREFIX = 'opspilot_last_workspace_id_user_';
 
-export function getStoredWorkspaceId(): number | null {
-  const storedValue = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
+function getStorageKeyForUser(userId?: number | null): string | null {
+  if (!userId || !Number.isSafeInteger(userId) || userId <= 0) {
+    return null;
+  }
+
+  return `${USER_WORKSPACE_STORAGE_KEY_PREFIX}${userId}`;
+}
+
+export function getStoredWorkspaceId(userId?: number | null): number | null {
+  const storageKey = getStorageKeyForUser(userId);
+  window.localStorage.removeItem(LEGACY_WORKSPACE_STORAGE_KEY);
+  if (!storageKey) {
+    return null;
+  }
+  const storedValue = window.localStorage.getItem(storageKey);
   if (!storedValue) {
     return null;
   }
@@ -11,15 +25,20 @@ export function getStoredWorkspaceId(): number | null {
     return workspaceId;
   }
 
-  window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+  window.localStorage.removeItem(storageKey);
   return null;
 }
 
-export function persistWorkspaceId(workspaceId: number | null): void {
-  if (workspaceId === null) {
-    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+export function persistWorkspaceId(workspaceId: number | null, userId?: number | null): void {
+  const storageKey = getStorageKeyForUser(userId);
+  window.localStorage.removeItem(LEGACY_WORKSPACE_STORAGE_KEY);
+
+  if (workspaceId === null && storageKey) {
+    window.localStorage.removeItem(storageKey);
     return;
   }
 
-  window.localStorage.setItem(WORKSPACE_STORAGE_KEY, String(workspaceId));
+  if (workspaceId !== null && storageKey) {
+    window.localStorage.setItem(storageKey, String(workspaceId));
+  }
 }

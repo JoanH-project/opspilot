@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import './App.css';
@@ -9,6 +10,7 @@ import { WorkspaceBootstrap } from './features/workspaces/WorkspaceBootstrap';
 import { WorkspaceDashboardRoute } from './features/workspaces/WorkspaceDashboardRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { queryClient } from './queryClient';
 
 function AppRoutes(): ReactElement {
   const { isAuthenticated, isLoading } = useAuth();
@@ -56,10 +58,12 @@ function AppRoutes(): ReactElement {
 
 export default function App(): ReactElement {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

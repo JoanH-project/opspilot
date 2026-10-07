@@ -1,5 +1,11 @@
 import { apiRequest } from './client';
-import type { WorkspaceDashboard, WorkspaceSummary } from '../types/workspace';
+import type {
+  UpdateWorkspaceRequest,
+  WorkspaceDashboard,
+  WorkspaceMemberResponse,
+  WorkspaceResponse,
+  WorkspaceSummary,
+} from '../types/workspace';
 
 export type CreateWorkspaceRequest = {
   name: string;
@@ -16,11 +22,39 @@ export const workspacesApi = {
     ),
 
   create: (request: CreateWorkspaceRequest, token: string) =>
-    apiRequest<WorkspaceSummary>(
+    apiRequest<WorkspaceResponse>(
       '/api/workspaces',
       {
         method: 'POST',
         body: JSON.stringify(request),
+      },
+      token,
+    ),
+
+  getById: (workspaceId: number, token: string) =>
+    apiRequest<WorkspaceResponse>(
+      `/api/workspaces/${workspaceId}`,
+      {
+        method: 'GET',
+      },
+      token,
+    ),
+
+  update: (workspaceId: number, request: UpdateWorkspaceRequest, token: string) =>
+    apiRequest<WorkspaceResponse>(
+      `/api/workspaces/${workspaceId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(request),
+      },
+      token,
+    ),
+
+  listMembers: (workspaceId: number, token: string) =>
+    apiRequest<WorkspaceMemberResponse[]>(
+      `/api/workspaces/${workspaceId}/members`,
+      {
+        method: 'GET',
       },
       token,
     ),

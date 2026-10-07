@@ -1,130 +1,123 @@
-import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { workspacesApi } from '../../api/workspaces';
-import { useAuth } from '../auth/useAuth';
-import { getStoredWorkspaceId, persistWorkspaceId } from './workspaceStorage';
-import type { WorkspaceSummary } from '../../types/workspace';
 import { getApiErrorMessage, isApiError } from '../../api/errors';
-
-type LoadState =
-  | { status: 'error'; requestKey: number; message: string }
-  | { status: 'ready'; requestKey: number; workspaces: WorkspaceSummary[] };
+import { workspacesApi } from '../../api/workspaces';
+import { workspaceQueryKeys } from '../../queryClient';
+import type { WorkspaceSummary } from '../../types/workspace';
+import { useAuth } from '../auth/useAuth';
+import { getStoredToken } from '../auth/authStorage';
+import { clearWorkspaceRejected, isWorkspaceRejected } from './workspaceRecovery';
+import { getStoredWorkspaceId, persistWorkspaceId } from './workspaceStorage';
 
 export function WorkspaceBootstrap(): ReactElement {
   const navigate = useNavigate();
-  const { token, refreshSession } = useAuth();
-  const [reloadKey, setReloadKey] = useState(0);
-  const [loadState, setLoadState] = useState<LoadState | null>(null);
+  const queryClient = useQueryClient();
+  const { token, currentUser, logout } = useAuth();
   const [workspaceName, setWorkspaceName] = useState('');
   const [formError, setFormError] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const currentUserId = useRef(currentUser?.id);
+  useEffect(() => {
+    currentUserId.current = currentUser?.id;
+  }, [currentUser?.id]);
+  const userId = currentUser?.id;
+
+  const workspacesQuery = useQuery({
+    queryKey: workspaceQueryKeys.list(userId ?? 0),
+    queryFn: () => workspacesApi.list(token!),
+    enabled: Boolean(token && userId),
+    staleTime: 30_000,
+  });
+  const workspaces = useMemo(() => workspacesQuery.data ?? [], [workspacesQuery.data]);
+  const createMutation = useMutation({
+    mutationFn: (name: string) => workspacesApi.create({ name }, token!),
+    onSuccess: async (created) => {
+      if (!userId || currentUserId.current !== userId || getStoredToken() !== token) {
+        return;
+      }
+      const summary: WorkspaceSummary = {
+        id: created.id,
+        name: created.name,
+        role: created.role,
+        createdAt: created.createdAt,
+      };
+      queryClient.setQueryData<WorkspaceSummary[]>(workspaceQueryKeys.list(userId), (previous) => [
+        ...(previous ?? []),
+        summary,
+      ]);
+      await queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.list(userId) });
+      persistWorkspaceId(created.id, userId);
+      navigate(`/app/${created.id}/dashboard`, { replace: true });
+    },
+  });
 
   useEffect(() => {
-    if (!token) {
+    if (workspacesQuery.error && isApiError(workspacesQuery.error) && workspacesQuery.error.status === 401) {
+      logout();
+    }
+  }, [logout, workspacesQuery.error]);
+
+  useEffect(() => {
+    if (!userId || workspacesQuery.isPending || workspacesQuery.isError) {
       return;
     }
+    if (workspaces.length === 1 && !isWorkspaceRejected(workspaces[0].id)) {
+      persistWorkspaceId(workspaces[0].id, userId);
+      navigate(`/app/${workspaces[0].id}/dashboard`, { replace: true });
+      return;
+    }
+    if (workspaces.length > 1) {
+      const storedId = getStoredWorkspaceId(userId);
+      const storedWorkspace = workspaces.find((workspace) => workspace.id === storedId);
+      if (storedWorkspace && !isWorkspaceRejected(storedWorkspace.id)) {
+        navigate(`/app/${storedWorkspace.id}/dashboard`, { replace: true });
+      }
+    }
+  }, [navigate, userId, workspaces, workspacesQuery.isError, workspacesQuery.isPending]);
 
-    let isActive = true;
-
-    void workspacesApi
-      .list(token)
-      .then((workspaces) => {
-        if (!isActive) {
-          return;
-        }
-
-        if (workspaces.length === 1) {
-          persistWorkspaceId(workspaces[0].id);
-          navigate(`/app/${workspaces[0].id}/dashboard`, { replace: true });
-          return;
-        }
-
-        if (workspaces.length > 1) {
-          const storedId = getStoredWorkspaceId();
-          const storedWorkspace = workspaces.find((workspace) => workspace.id === storedId);
-          if (storedWorkspace) {
-            navigate(`/app/${storedWorkspace.id}/dashboard`, { replace: true });
-            return;
-          }
-
-          persistWorkspaceId(null);
-        } else {
-          persistWorkspaceId(null);
-        }
-
-        setLoadState({ status: 'ready', requestKey: reloadKey, workspaces });
-      })
-      .catch(async (error: unknown) => {
-        if (!isActive) {
-          return;
-        }
-
-        if (isApiError(error) && error.status === 401) {
-          await refreshSession();
-          return;
-        }
-
-        setLoadState({
-          status: 'error',
-          requestKey: reloadKey,
-          message: getApiErrorMessage(error, 'Unable to load your workspaces.'),
-        });
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [navigate, refreshSession, reloadKey, token]);
-
-  const handleCreateWorkspace = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const submitCreateWorkspace = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const name = workspaceName.trim();
-
     if (!name) {
       setFormError('Workspace name is required.');
       return;
     }
-
     if (name.length > 100) {
       setFormError('Workspace name must be 100 characters or fewer.');
       return;
     }
-
-    if (!token) {
-      return;
-    }
-
-    setIsCreating(true);
     setFormError('');
-
-    try {
-      const workspace = await workspacesApi.create({ name }, token);
-      persistWorkspaceId(workspace.id);
-      navigate(`/app/${workspace.id}/dashboard`, { replace: true });
-    } catch (error) {
-      if (isApiError(error) && error.status === 401) {
-        await refreshSession();
-      } else {
+    createMutation.mutate(name, {
+      onError: (error) => {
+        if (getStoredToken() !== token) {
+          return;
+        }
+        if (isApiError(error) && error.status === 401) {
+          logout();
+          return;
+        }
         setFormError(getApiErrorMessage(error, 'Unable to create the workspace.'));
-      }
-    } finally {
-      setIsCreating(false);
-    }
+      },
+    });
   };
 
-  if (!loadState || loadState.requestKey !== reloadKey) {
+  if (workspacesQuery.isPending) {
     return <div className="page-loading">Loading your workspaces…</div>;
   }
 
-  if (loadState.status === 'error') {
+  if (workspacesQuery.isError) {
     return (
       <div className="bootstrap-page">
         <section className="page-panel state-panel" role="alert">
           <p className="eyebrow">Workspace setup</p>
           <h1>We couldn’t load your workspaces</h1>
-          <p>{loadState.message}</p>
-          <button className="secondary-button" onClick={() => setReloadKey((current) => current + 1)}>
+          <p>{getApiErrorMessage(workspacesQuery.error, 'Unable to load your workspaces.')}</p>
+          <button
+            className="secondary-button"
+            onClick={() => void workspacesQuery.refetch()}
+            type="button"
+          >
             Retry
           </button>
         </section>
@@ -132,61 +125,94 @@ export function WorkspaceBootstrap(): ReactElement {
     );
   }
 
-  if (loadState.workspaces.length === 0) {
-    return (
-      <div className="bootstrap-page">
-        <section className="page-panel bootstrap-panel">
-          <p className="eyebrow">Welcome to OpsPilot</p>
-          <h1>Create your first workspace</h1>
-          <p>A workspace is where your team’s operations will live.</p>
-          <form className="auth-form workspace-form" onSubmit={handleCreateWorkspace} noValidate>
-            <label className="field">
-              <span>Workspace name</span>
-              <input
-                autoFocus
-                maxLength={100}
-                value={workspaceName}
-                onChange={(event) => setWorkspaceName(event.target.value)}
-                aria-invalid={Boolean(formError)}
-                aria-describedby={formError ? 'workspace-name-error' : undefined}
-                placeholder="e.g. Acme Operations"
-              />
-              {formError ? <small id="workspace-name-error">{formError}</small> : null}
-            </label>
-            <button className="primary-button" type="submit" disabled={isCreating}>
-              {isCreating ? 'Creating workspace…' : 'Create workspace'}
-            </button>
-          </form>
-        </section>
-      </div>
-    );
-  }
+  const showCreateForm = workspaces.length === 0;
+  const rejectedWorkspaces = workspaces.filter((workspace) => isWorkspaceRejected(workspace.id));
 
   return (
     <div className="bootstrap-page">
       <section className="page-panel bootstrap-panel">
-        <p className="eyebrow">Choose a workspace</p>
-        <h1>Where would you like to work?</h1>
-        <p>Select a workspace to open its Dashboard.</p>
-        <div className="workspace-choice-list">
-          {loadState.workspaces.map((workspace) => (
-            <button
-              className="workspace-choice"
-              key={workspace.id}
-              onClick={() => {
-                persistWorkspaceId(workspace.id);
-                navigate(`/app/${workspace.id}/dashboard`);
-              }}
-              type="button"
-            >
-              <span>
-                <strong>{workspace.name}</strong>
-                <small>{workspace.role}</small>
-              </span>
-              <span aria-hidden="true">→</span>
-            </button>
-          ))}
-        </div>
+        <p className="eyebrow">{showCreateForm ? 'Welcome to OpsPilot' : 'Choose a workspace'}</p>
+        <h1>{showCreateForm ? 'Create your first workspace' : 'Where would you like to work?'}</h1>
+        <p>
+          {showCreateForm
+            ? 'A workspace is where your team’s operations will live.'
+            : 'Select a workspace to open its Dashboard.'}
+        </p>
+
+        {rejectedWorkspaces.length > 0 ? (
+          <div className="form-error-banner" role="status">
+            {rejectedWorkspaces.length === 1
+              ? `${rejectedWorkspaces[0].name} is unavailable. Retry it or choose another workspace.`
+              : 'Some workspaces are unavailable. Choose another workspace or retry access.'}
+          </div>
+        ) : null}
+
+        {workspaces.length > 0 ? (
+          <div className="workspace-choice-list">
+            {workspaces.map((workspace) => {
+              const rejected = isWorkspaceRejected(workspace.id);
+              return (
+                <div className="workspace-choice-row" key={workspace.id}>
+                  <button
+                    className="workspace-choice"
+                    disabled={rejected}
+                    onClick={() => {
+                      persistWorkspaceId(workspace.id, userId);
+                      navigate(`/app/${workspace.id}/dashboard`);
+                    }}
+                    type="button"
+                  >
+                    <span>
+                      <strong>{workspace.name}</strong>
+                      <small>{workspace.role}{rejected ? ' · unavailable' : ''}</small>
+                    </span>
+                    <span aria-hidden="true">→</span>
+                  </button>
+                  {rejected ? (
+                    <button
+                      className="secondary-button workspace-retry-button"
+                      onClick={() => {
+                        clearWorkspaceRejected(workspace.id);
+                        persistWorkspaceId(workspace.id, userId);
+                        navigate(`/app/${workspace.id}/dashboard`);
+                      }}
+                      type="button"
+                    >
+                      Retry access
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <form className="auth-form workspace-form" onSubmit={submitCreateWorkspace} noValidate>
+          <label className="field" htmlFor="bootstrap-workspace-name">
+            <span>{showCreateForm ? 'Workspace name' : 'Create another workspace'}</span>
+            <input
+              id="bootstrap-workspace-name"
+              maxLength={100}
+              onChange={(event) => setWorkspaceName(event.target.value)}
+              placeholder="e.g. Acme Operations"
+              value={workspaceName}
+            />
+            {formError ? <small role="alert">{formError}</small> : null}
+            {createMutation.isError &&
+            isApiError(createMutation.error) &&
+            createMutation.error.status === 400 &&
+            createMutation.error.fieldErrors.name ? (
+              <small role="alert">{createMutation.error.fieldErrors.name}</small>
+            ) : null}
+          </label>
+          <button className="primary-button" disabled={createMutation.isPending} type="submit">
+            {createMutation.isPending
+              ? 'Creating workspace…'
+              : showCreateForm
+                ? 'Create workspace'
+                : 'Create another workspace'}
+          </button>
+        </form>
       </section>
     </div>
   );
