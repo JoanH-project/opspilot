@@ -1,14 +1,16 @@
 import type { ReactElement } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import './App.css';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './features/auth/AuthContext';
 import { useAuth } from './features/auth/useAuth';
-import { AppShell } from './layouts/AppShell';
-import { DashboardPage } from './pages/DashboardPage';
+import { WorkspaceBootstrap } from './features/workspaces/WorkspaceBootstrap';
+import { WorkspaceDashboardRoute } from './features/workspaces/WorkspaceDashboardRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { queryClient } from './queryClient';
 
 function AppRoutes(): ReactElement {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,70 +21,49 @@ function AppRoutes(): ReactElement {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+      <Route path="/" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />
 
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to="/app" replace /> : <LoginPage />}
       />
 
       <Route
         path="/register"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
+        element={isAuthenticated ? <Navigate to="/app" replace /> : <RegisterPage />}
       />
 
       <Route
-        path="/dashboard"
+        path="/app"
         element={
           <ProtectedRoute>
-            <AppShell>
-              <DashboardPage />
-            </AppShell>
+            <WorkspaceBootstrap />
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/projects"
+        path="/app/:workspaceId/dashboard"
         element={
           <ProtectedRoute>
-            <AppShell>
-              <div className="page-panel">
-                <p className="eyebrow">Projects</p>
-                <h1>Projects</h1>
-                <p>Project management will be added in a later phase.</p>
-              </div>
-            </AppShell>
+            <WorkspaceDashboardRoute />
           </ProtectedRoute>
         }
       />
 
-      <Route
-        path="/documents"
-        element={
-          <ProtectedRoute>
-            <AppShell>
-              <div className="page-panel">
-                <p className="eyebrow">Documents</p>
-                <h1>Documents</h1>
-                <p>Document management will be added in a later phase.</p>
-              </div>
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />
     </Routes>
   );
 }
 
 export default function App(): ReactElement {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

@@ -58,7 +58,8 @@ export function LoginPage(): ReactElement {
         password: form.password,
       });
 
-      const redirectTarget = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/dashboard';
+      const redirectTarget =
+        (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/app';
       navigate(redirectTarget, { replace: true });
     } catch (error) {
       const apiError = error as ApiError;
