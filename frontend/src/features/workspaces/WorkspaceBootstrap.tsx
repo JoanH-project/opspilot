@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -18,7 +18,7 @@ export function WorkspaceBootstrap(): ReactElement {
   const [workspaceName, setWorkspaceName] = useState('');
   const [formError, setFormError] = useState('');
   const currentUserId = useRef(currentUser?.id);
-  useEffect(() => {
+  useLayoutEffect(() => {
     currentUserId.current = currentUser?.id;
   }, [currentUser?.id]);
   const userId = currentUser?.id;
@@ -47,6 +47,9 @@ export function WorkspaceBootstrap(): ReactElement {
         summary,
       ]);
       await queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.list(userId) });
+      if (currentUserId.current !== userId || getStoredToken() !== token) {
+        return;
+      }
       persistWorkspaceId(created.id, userId);
       navigate(`/app/${created.id}/dashboard`, { replace: true });
     },

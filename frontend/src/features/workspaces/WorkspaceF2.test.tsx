@@ -103,7 +103,7 @@ function renderWorkspaceApp(initialPath = '/app') {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
   });
-  return render(
+  const app = () => (
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
@@ -118,8 +118,18 @@ function renderWorkspaceApp(initialPath = '/app') {
           <Route path="*" element={<LocationProbe />} />
         </Routes>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const view = render(app());
+  return { ...view, rerenderWorkspaceApp: () => view.rerender(app()) };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => {
+    resolve = complete;
+  });
+  return { promise, resolve };
 }
 
 describe('F2 workspace behavior', () => {
@@ -127,6 +137,10 @@ describe('F2 workspace behavior', () => {
     window.localStorage.clear();
     window.localStorage.setItem('opspilot_access_token', 'test-token');
     vi.clearAllMocks();
+    authState.token = 'test-token';
+    authState.currentUser = { id: 10, email: 'owner@example.com', name: 'Owner', createdAt: '2026-01-01T00:00:00Z' };
+    authState.isAuthenticated = true;
+    authState.isLoading = false;
     clearRejectedWorkspaces();
     api.list.mockResolvedValue([firstWorkspace]);
     api.create.mockResolvedValue({
@@ -353,6 +367,69 @@ describe('F2 workspace behavior', () => {
 
     await waitFor(() => expect(authState.logout).toHaveBeenCalledOnce());
     expect(authState.refreshSession).not.toHaveBeenCalled();
+  });
+
+  it('shows a retryable first-load error when the workspace list fails, then recovers', async () => {
+    api.list.mockRejectedValueOnce(makeApiError(500, 'Service unavailable'));
+    const user = userEvent.setup();
+    renderWorkspaceApp('/app/1/dashboard');
+
+    expect(await screen.findByRole('heading', { name: 'We couldn’t load this workspace' })).toBeInTheDocument();
+    expect(screen.queryByText('Loading your workspace…')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(screen.getByLabelText('Current route')).toHaveTextContent('/app/1/dashboard'));
+    expect(await within(screen.getByRole('main')).findByRole('heading', { name: 'Operations' })).toBeInTheDocument();
+    expect(api.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not persist or navigate a bootstrap create after the session changes during invalidation', async () => {
+    api.list.mockResolvedValueOnce([firstWorkspace, secondWorkspace]);
+    const refresh = deferred<WorkspaceSummary[]>();
+    api.list.mockImplementationOnce(() => refresh.promise);
+    const user = userEvent.setup();
+    const view = renderWorkspaceApp();
+
+    await user.type(await screen.findByRole('textbox', { name: 'Create another workspace' }), 'New space');
+    await user.click(screen.getByRole('button', { name: 'Create another workspace' }));
+    await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+
+    authState.currentUser = { id: 11, email: 'member@example.com', name: 'Member', createdAt: '2026-01-02T00:00:00Z' };
+    authState.token = 'member-token';
+    window.localStorage.setItem('opspilot_access_token', 'member-token');
+    view.rerenderWorkspaceApp();
+    refresh.resolve([firstWorkspace, secondWorkspace, createdWorkspace]);
+
+    await waitFor(() => expect(screen.getByLabelText('Current route')).toHaveTextContent('/app'));
+    expect(getStoredWorkspaceId(10)).toBeNull();
+    expect(screen.getByLabelText('Current route')).not.toHaveTextContent('/app/3/dashboard');
+  });
+
+  it('does not persist or navigate an AppShell create after the session changes during invalidation', async () => {
+    api.list.mockResolvedValue([firstWorkspace, secondWorkspace]);
+    const refresh = deferred<WorkspaceSummary[]>();
+    api.list.mockImplementationOnce(async () => [firstWorkspace, secondWorkspace]).mockImplementationOnce(() => refresh.promise);
+    const user = userEvent.setup();
+    const view = renderWorkspaceApp('/app/1/dashboard');
+
+    await user.click(await screen.findByRole('button', { name: 'Create workspace' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Workspace name'), 'New space');
+    await user.click(within(dialog).getByRole('button', { name: 'Create workspace' }));
+    await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+    expect(getStoredWorkspaceId(10)).toBe(1);
+
+    authState.currentUser = { id: 11, email: 'member@example.com', name: 'Member', createdAt: '2026-01-02T00:00:00Z' };
+    authState.token = 'member-token';
+    window.localStorage.setItem('opspilot_access_token', 'member-token');
+    view.rerenderWorkspaceApp();
+    await waitFor(() => expect(screen.getByText('Member')).toBeInTheDocument());
+    expect(window.localStorage.getItem('opspilot_access_token')).toBe('member-token');
+    refresh.resolve([firstWorkspace, secondWorkspace, createdWorkspace]);
+
+    await waitFor(() => expect(screen.getByLabelText('Current route')).toHaveTextContent('/app/1/dashboard'));
+    expect(getStoredWorkspaceId(10)).not.toBe(3);
+    expect(screen.getByLabelText('Current route')).not.toHaveTextContent('/app/3/dashboard');
   });
 
   it('keeps last-workspace preferences isolated by user', () => {
