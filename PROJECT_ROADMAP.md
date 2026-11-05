@@ -2,9 +2,9 @@
 
 > **Updated:** 2026-11-06
 > **Current Milestone:** Owner-led V1 full-stack review
-> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2 are merged; F2 hardening and F3/F4 are implemented and locally verified on `feat/opspilot-v1-fullstack-completion`; GitHub CI and owner review remain.
-> **Current Sprint:** Review the consolidated V1 completion PR
-> **Next Major Milestone:** Owner review and merge decision; V2 has not started
+> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2 are merged; F2 hardening and F3/F4 are implemented and locally verified on `feat/opspilot-v1-fullstack-completion`; consolidated PR #7 is open, with final CI and owner review remaining.
+> **Current Sprint:** Review consolidated V1 completion PR #7
+> **Next Major Milestone:** Pass PR checks and complete the owner merge decision; V2 has not started
 
 ## 1. Project goal
 
@@ -57,7 +57,8 @@ The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or ex
 - Local verification passed: frontend `npm test` (26 tests), lint, production build, and backend `mvn clean verify` (38 tests). The backend compiled with `--release 21` using the locally available Java 26 Maven runtime; Java 21 is not installed locally, while backend CI is configured for Java 21.
 - Isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome browser flows (81 API responses). This included auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. A full backend stop/restart recovery was not exercised.
 - Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
-- Final GitHub Actions status and Joan's review remain pending. Do not mark V1 complete or start V2 until the owner decides on the PR.
+- Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) is open against `main`. Check GitHub Actions on its latest head before merging; Joan's review and merge decision remain pending.
+- Do not mark V1 complete or start V2 until remote CI passes and the owner reviews the PR.
 - Contract follow-up: the backend task enum also accepts `URGENT`, while the frozen frontend contract lists `LOW`, `MEDIUM`, and `HIGH`; this UI uses the frozen contract values pending an explicit contract decision.
 
 ### Phase 8 completion rule
@@ -506,7 +507,7 @@ F1 authentication and F2 workspace/dashboard implementation are merged. Preserve
 
 ### Milestone 3 — V1 full-stack completion
 
-Projects, tasks, documents, frontend regression coverage, and local integration have passed on the owner feature branch. This milestone remains pending remote CI and owner review; no V2 work is authorized by this milestone.
+Projects, tasks, documents, frontend regression coverage, and local integration have passed on the owner feature branch. PR #7 is open; this milestone remains pending remote CI and owner review. No V2 work is authorized by this milestone.
 
 ### V1 Full-stack demo flow
 
