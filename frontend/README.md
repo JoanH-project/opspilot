@@ -37,6 +37,8 @@ npm run lint
 npm run build
 ```
 
+The Frontend CI workflow runs `npm ci`, `npm test`, `npm run lint`, and `npm run build` with Node.js 22 for pull requests and pushes that change `frontend/**` or the workflow file. Vitest exercises the frontend in jsdom with API modules mocked or spied on; these checks do not start Spring Boot or MySQL, verify live CORS/JWT integration, or exercise real browser flows. For end-to-end acceptance against the running services, use the root `docs/FRONTEND_SMOKE_TEST.md` checklist.
+
 The local Vite app expects the backend at:
 
 ```bash
