@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -17,7 +17,11 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const navigationItems = [{ label: 'Dashboard', to: 'dashboard' }];
+const navigationItems = [
+  { label: 'Dashboard', to: 'dashboard' },
+  { label: 'Projects', to: 'projects' },
+  { label: 'Documents', to: 'documents' },
+];
 
 export function AppShell({ children, currentWorkspace, workspaces }: AppShellProps): ReactElement {
   const navigate = useNavigate();
@@ -28,7 +32,7 @@ export function AppShell({ children, currentWorkspace, workspaces }: AppShellPro
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [createError, setCreateError] = useState('');
   const currentUserId = useRef(currentUser?.id);
-  useEffect(() => {
+  useLayoutEffect(() => {
     currentUserId.current = currentUser?.id;
   }, [currentUser?.id]);
 
@@ -49,6 +53,9 @@ export function AppShell({ children, currentWorkspace, workspaces }: AppShellPro
         },
       ]);
       await queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.list(userId) });
+      if (currentUserId.current !== userId || getStoredToken() !== token) {
+        return;
+      }
       persistWorkspaceId(created.id, userId);
       setIsCreateOpen(false);
       setNewWorkspaceName('');

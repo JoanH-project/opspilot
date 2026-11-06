@@ -106,10 +106,6 @@ export function WorkspaceDashboardRoute(): ReactElement {
     void dashboardQuery.refetch();
   };
 
-  if (workspacesQuery.isPending || !workspacesQuery.data) {
-    return <div className="page-loading">Loading your workspace…</div>;
-  }
-
   if (workspacesQuery.isError) {
     return (
       <div className="page-loading">
@@ -123,6 +119,10 @@ export function WorkspaceDashboardRoute(): ReactElement {
         </section>
       </div>
     );
+  }
+
+  if (workspacesQuery.isPending || !workspacesQuery.data) {
+    return <div className="page-loading">Loading your workspace…</div>;
   }
 
   if (parsedWorkspaceId === null || !currentWorkspace) {

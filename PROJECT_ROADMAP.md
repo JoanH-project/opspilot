@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
-> **Updated:** 2026-08-25
-> **Current Milestone:** V1 Backend Freeze / Frontend Integration
-> **Overall Progress:** OpsPilot complete target ≈ 42%; V1 ≈ 65–70%; V1 backend feature implementation ≈ 100%
-> **Current Sprint:** Frozen V1 backend contract and React/TypeScript frontend integration
-> **Next Major Implementation:** React + TypeScript frontend
+> **Updated:** 2026-11-06
+> **Current Milestone:** Owner-led V1 full-stack review
+> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2 are merged; F2 hardening and F3/F4 are implemented and locally verified on `feat/opspilot-v1-fullstack-completion`; consolidated PR #7 is open, with final CI and owner review remaining.
+> **Current Sprint:** Review consolidated V1 completion PR #7
+> **Next Major Milestone:** Pass PR checks and complete the owner merge decision; V2 has not started
 
 ## 1. Project goal
 
@@ -45,9 +45,21 @@ Phases 1–8 have been:
 
 Phase 8 has been implemented, automatically tested, verified against real MySQL/Flyway V7, and exercised through JWT-authenticated HTTP flows. Verified behavior includes transactional activity recording, feed limits and ordering, dashboard aggregation, overdue-task rules, archive idempotency, tenant isolation, and persisted activity rows.
 
-The V1 backend feature implementation is essentially complete. The next step is V1 Backend Freeze and frontend API contract review; no later backend or AI phase has started.
+The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1; no later backend or AI phase has started.
 
 The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or explicitly agreed contract changes. The shared frontend reference is `docs/API_CONTRACT.md`.
+
+## 3.1 Frontend and V1 acceptance status
+
+- Frontend authentication and the F2 workspace/dashboard foundation are present on `main`; PR #6 is merged. Existing contributor commits remain intact.
+- Human browser acceptance for F1 was reported complete by Joan. Do not extend that result to later features.
+- The owner-led completion branch contains the F2 loading/session-race fixes, Projects and Tasks views, workspace Documents views, regression tests, and a frontend CI test step.
+- Local verification passed: frontend `npm test` (26 tests), lint, production build, and backend `mvn clean verify` (38 tests). The backend compiled with `--release 21` using the locally available Java 26 Maven runtime; Java 21 is not installed locally, while backend CI is configured for Java 21.
+- Isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome browser flows (81 API responses). This included auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. A full backend stop/restart recovery was not exercised.
+- Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
+- Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) is open against `main`. Check GitHub Actions on its latest head before merging; Joan's review and merge decision remain pending.
+- Do not mark V1 complete or start V2 until remote CI passes and the owner reviews the PR.
+- Contract follow-up: the backend task enum also accepts `URGENT`, while the frozen frontend contract lists `LOW`, `MEDIUM`, and `HIGH`; this UI uses the frozen contract values pending an explicit contract decision.
 
 ### Phase 8 completion rule
 
@@ -128,7 +140,7 @@ Goal: a complete demonstrable product.
 - Frontend/backend integration
 - Docker-based local demo
 
-**Current version: V1**
+**Current version: V1 — final full-stack acceptance pending**
 
 ### V2 — Production Backend
 
@@ -248,11 +260,12 @@ Primary ownership:
 - Resume/demo architecture story
 
 Current tasks:
-- [ ] Finish Phase 8 Codex implementation review
-- [ ] Run Phase 8 local MySQL/JWT/HTTP verification
-- [ ] Commit/push Phase 8
-- [ ] Run V1 backend final review
-- [ ] Freeze frontend-facing API contracts
+- [x] Preserve merged backend Phases 1–8 and the frozen V1 API contract
+- [x] Preserve merged F1/F2 frontend work and contributor history
+- [x] Finish owner-led F2 hardening, F3 Projects/Tasks, and F4 Documents
+- [x] Run frontend test/lint/build and backend verification on the current branch head
+- [x] Complete safe local MySQL/HTTP integration and headless Chrome browser checks
+- [ ] Review the consolidated V1 completion PR; owner performs the final merge decision
 
 ### Member A — Frontend / Product Experience
 
@@ -428,46 +441,18 @@ Do not use README as a project diary.
 
 Codex implementation prompts can remain private between Joan and the assignee. They do not need to be committed to GitHub unless the team later decides to maintain reusable issue templates/specs.
 
-## 10. Current parallel sprint
+## 10. Current owner-led sprint
 
-### Track A — Backend / Joan
+The previously merged Member A and Member B work is retained. New implementation and final verification are coordinated on one owner branch so the repository has one consolidated V1 review surface. No contributor's earlier task is retroactively marked failed.
 
-Goal: close Phase 8.
+### V1 completion checkpoints
 
-1. Complete transactional Activity integration
-2. Complete Activity/Dashboard tests
-3. Update README
-4. Run `mvn clean test`
-5. Run `mvn package`
-6. Run local MySQL/JWT/HTTP verification
-7. Update `TEAM_STATUS.md`
-8. Commit/push
-9. V1 backend final review
-
-### Track B — Frontend / Member A
-
-Goal: prepare and start V1 frontend.
-
-1. Read API surface
-2. Define routes/pages
-3. Define app shell
-4. Define API client approach
-5. Login/Register UI
-6. Dashboard skeleton
-7. Record questions/blockers in `TEAM_STATUS.md`
-8. Start backend integration after contract freeze
-
-### Track C — QA/DevOps / Member B
-
-Goal: make the repository easy to run and verify.
-
-1. Fresh clone verification
-2. Docker Compose verification
-3. Environment-variable checklist
-4. API smoke-test plan
-5. CI proposal / scoped implementation after review
-6. V1 integration acceptance checklist
-7. Record results/blockers in `TEAM_STATUS.md`
+1. Fix the known F2 first-load and session-change regressions.
+2. Complete project list/create/edit/archive and project-scoped task flows.
+3. Complete workspace document list/create/detail/edit/preview/archive.
+4. Run Vitest, lint, build, backend verification, and the available isolated local integration checks.
+5. Update the smoke checklist, README, `TEAM_STATUS.md`, and this roadmap with observed results.
+6. Push one consolidated PR against `main`; do not merge until Joan reviews it.
 
 ## 11. V1 page scope
 
@@ -512,24 +497,19 @@ Codex saying "implemented" is not itself completion.
 
 ## 13. Next milestones
 
-### Milestone 1 — Phase 8 Complete
+### Milestone 1 — Backend Phases 1–8
 
-Activity Logs + Dashboard fully integrated, tested, verified and pushed.
+Complete and merged. The backend API remains frozen except for verified bugs and explicitly agreed contract changes.
 
-### Milestone 2 — V1 Backend Freeze
+### Milestone 2 — Frontend F1/F2 foundation
 
-Review:
-- API consistency
-- auth/authorization
-- migrations
-- error model
-- tests
-- README
-- frontend-facing contracts
+F1 authentication and F2 workspace/dashboard implementation are merged. Preserve their history and test coverage.
 
-After this, V1 backend scope is frozen except for bug fixes and agreed contract changes.
+### Milestone 3 — V1 full-stack completion
 
-### Milestone 3 — V1 Full-stack Demo
+Projects, tasks, documents, frontend regression coverage, and local integration have passed on the owner feature branch. PR #7 is open; this milestone remains pending remote CI and owner review. No V2 work is authorized by this milestone.
+
+### V1 Full-stack demo flow
 
 ```text
 Register/Login

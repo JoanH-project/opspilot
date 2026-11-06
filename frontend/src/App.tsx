@@ -8,6 +8,8 @@ import { AuthProvider } from './features/auth/AuthContext';
 import { useAuth } from './features/auth/useAuth';
 import { WorkspaceBootstrap } from './features/workspaces/WorkspaceBootstrap';
 import { WorkspaceDashboardRoute } from './features/workspaces/WorkspaceDashboardRoute';
+import { DocumentsRoute, DocumentDetailRoute } from './features/documents/DocumentsRoute';
+import { ProjectDetailRoute, ProjectsRoute } from './features/projects/ProjectsRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { queryClient } from './queryClient';
@@ -49,6 +51,23 @@ function AppRoutes(): ReactElement {
             <WorkspaceDashboardRoute />
           </ProtectedRoute>
         }
+      />
+
+      <Route
+        path="/app/:workspaceId/projects"
+        element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>}
+      />
+      <Route
+        path="/app/:workspaceId/projects/:projectId"
+        element={<ProtectedRoute><ProjectDetailRoute /></ProtectedRoute>}
+      />
+      <Route
+        path="/app/:workspaceId/documents"
+        element={<ProtectedRoute><DocumentsRoute /></ProtectedRoute>}
+      />
+      <Route
+        path="/app/:workspaceId/documents/:documentId"
+        element={<ProtectedRoute><DocumentDetailRoute /></ProtectedRoute>}
       />
 
       <Route path="*" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />

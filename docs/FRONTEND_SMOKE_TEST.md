@@ -1,6 +1,6 @@
-# OpsPilot V1 Frontend Auth + F2 Smoke Test
+# OpsPilot V1 Frontend Smoke Test
 
-Reusable manual browser checklist for authentication, workspace bootstrap, and Dashboard. Run this after MySQL, the backend, and the frontend dev server are all running locally.
+Reusable manual browser checklist for authentication, workspace bootstrap and management, Dashboard, Projects/Tasks, and Documents. Run this after MySQL, the backend, and the frontend dev server are all running locally.
 
 **Prerequisites:** see root `README.md` and `frontend/README.md`.
 
@@ -196,6 +196,39 @@ Backend default allow-list includes `http://localhost:5173`.
 
 ---
 
+## 15. Projects and tasks
+
+| Check | Action | Expected |
+|---|---|---|
+| Project list | Open `/app/{workspaceId}/projects` | Active projects load for the workspace in the URL |
+| Create | Submit a project name and optional description | Project appears and Dashboard counts/activity become stale and refresh on return |
+| Edit | Edit a project you created, or use OWNER/ADMIN | Updated name and description appear; 400/403/409 feedback remains visible |
+| Archive | Choose Archive and confirm | Project appears under Archived; archived project detail stays readable and task writes are hidden |
+| Project detail | Open `/app/{workspaceId}/projects/{projectId}` | Tasks are listed for that project only |
+| Task filters | Filter by status, priority, and workspace member | Query uses the supported status/priority/assigneeId filters |
+| Create/update | Create and edit a task with a member assignee and due date | Task updates; edit can clear assignee and date using the API clear flags |
+| Status | Change TODO / IN_PROGRESS / DONE | Status is saved and dashboard/activity refresh after returning to Dashboard |
+| Workspace boundary | Open a project URL with a different workspace ID | Project content is not rendered under the wrong workspace |
+
+Priority values in the frozen V1 frontend contract are `LOW`, `MEDIUM`, and `HIGH`.
+
+---
+
+## 16. Documents and Markdown preview
+
+| Check | Action | Expected |
+|---|---|---|
+| List | Open `/app/{workspaceId}/documents` | Active/archived filter works; list rows contain summary fields only |
+| Create | Create a document with a title and Markdown text | New document opens and fetches full content on demand |
+| Preview | Open a document with headings, lists, links, and code | Markdown is readable; raw HTML and scripts do not execute |
+| Edit | Edit the title/content, switch between Edit and Preview, and save | Saved content is shown and Dashboard/activity refresh after returning to Dashboard |
+| Archive | Choose Archive and confirm | Document remains readable in Archived and edit/archive actions disappear |
+| Error/retry | Stop the API or return an HTTP error while loading/saving | Useful error is shown with Retry where applicable; the page remains usable |
+
+Document update/archive controls appear for the creator or an OWNER/ADMIN. The backend remains the authorization boundary.
+
+---
+
 ## Completion checklist
 
 - [ ] Register works
@@ -212,5 +245,9 @@ Backend default allow-list includes `http://localhost:5173`.
 - [ ] Validation and wrong-password errors behave correctly
 - [ ] CORS works from Vite dev server
 - [ ] Backend unavailable shows network-style UX
+- [ ] Project create/edit/archive and archived read-only behavior works
+- [ ] Task create/edit/status/filter/assignee/due-date behavior works
+- [ ] Documents list/create/detail/edit/preview/archive behavior works
+- [ ] Dashboard reflects project/task/document activity after navigation or refresh
 
-When this checklist passes against a fresh local run, the auth + workspace bootstrap + Dashboard flow is ready for review handoff or regression checks.
+This checklist is a reusable manual verification aid; it is not itself evidence that a run passed. Record observed results for a specific run in `TEAM_STATUS.md`.

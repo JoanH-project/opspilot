@@ -1,6 +1,6 @@
 # OpsPilot
 
-OpsPilot is a full-stack operations platform: a Spring Boot backend with JWT authentication, workspace RBAC, and a React + TypeScript frontend (Vite).
+OpsPilot is a full-stack operations platform: a Spring Boot backend with JWT authentication and workspace RBAC, plus a React + TypeScript frontend for workspaces, projects, tasks, documents, and activity.
 
 ```text
 MySQL (:3306)
@@ -15,7 +15,7 @@ React / Vite (:5173)
 - **Java 21** — backend target (`backend/pom.xml`). A newer locally installed JDK is fine; Maven compiles with `--release 21`.
 - **Maven 3.9+**
 - **Docker Desktop** (or another Docker Compose-compatible runtime) for local MySQL
-- **Node.js 20+** and **npm** for the frontend
+- **Node.js 22.22.2+** (or **24.15.0+**) and **npm** for the frontend
 
 ## Quick start (fresh clone)
 
@@ -66,7 +66,7 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 cp .env.example .env
 npm run dev
 ```
@@ -254,16 +254,19 @@ Frontend (`frontend/`):
 
 ```bash
 npm ci
+npm test
 npm run lint
 npm run build
 ```
+
+Frontend CI runs the same four commands with Node 22, which meets the minimum Node runtime required by the locked frontend dependencies.
 
 ## Manual verification
 
 | Checklist | Purpose |
 |---|---|
 | `docs/API_SMOKE_TEST.md` | Backend HTTP/JWT end-to-end verification |
-| `docs/FRONTEND_SMOKE_TEST.md` | Frontend F1 browser verification (Register, Login, ProtectedRoute, CORS, etc.) |
+| `docs/FRONTEND_SMOKE_TEST.md` | Browser verification for authentication, workspaces, Dashboard, projects, tasks, and documents |
 | `docs/AUTH_REGRESSION.md` | Focused auth regressions after PR #4 (409 / 401 / network / `/users/me` token commit) |
 
 ## Documentation map
@@ -272,7 +275,7 @@ npm run build
 |---|---|
 | `docs/API_CONTRACT.md` | Frozen V1 frontend/backend API contract |
 | `docs/API_SMOKE_TEST.md` | Human backend verification checklist |
-| `docs/FRONTEND_SMOKE_TEST.md` | Human frontend F1 verification checklist |
+| `docs/FRONTEND_SMOKE_TEST.md` | Human frontend acceptance checklist |
 | `docs/AUTH_REGRESSION.md` | Auth Stabilization regression checks (post PR #4) |
 | `docs/ENVIRONMENT.md` | Environment variable reference |
 | `frontend/README.md` | Frontend-specific setup and development |
