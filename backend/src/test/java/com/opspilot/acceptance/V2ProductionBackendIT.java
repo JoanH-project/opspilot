@@ -267,8 +267,12 @@ class V2ProductionBackendIT {
         assertThat(client.getForEntity(root + "/actuator/prometheus", String.class).getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
         ResponseEntity<String> metricsResponse = client.withBasicAuth(METRICS_TEST_USERNAME, METRICS_TEST_PASSWORD)
-                .getForEntity(root + "/actuator/prometheus", String.class);
-        assertThat(metricsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+                .exchange(RequestEntity.get(root + "/actuator/prometheus").accept(MediaType.ALL).build(),
+                        String.class);
+        assertThat(metricsResponse.getStatusCode())
+                .as("Prometheus response: contentType=%s body=%s",
+                        metricsResponse.getHeaders().getContentType(), metricsResponse.getBody())
+                .isEqualTo(HttpStatus.OK);
         assertThat(client.getForEntity(root + "/actuator/env", String.class).getStatusCode())
                 .isIn(HttpStatus.NOT_FOUND, HttpStatus.FORBIDDEN, HttpStatus.UNAUTHORIZED);
     }
