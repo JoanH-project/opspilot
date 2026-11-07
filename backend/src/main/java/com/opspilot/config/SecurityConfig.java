@@ -13,6 +13,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -31,7 +32,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     @Bean
     @Order(1)
-    SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http, UserDetailsService metricsUserDetailsService,
+                                                     BCryptPasswordEncoder passwordEncoder) throws Exception {
+        DaoAuthenticationProvider metricsAuthenticationProvider = new DaoAuthenticationProvider(metricsUserDetailsService);
+        metricsAuthenticationProvider.setPasswordEncoder(passwordEncoder);
         RequestMatcher livez = PathPatternRequestMatcher.withDefaults().matcher("/livez");
         RequestMatcher readyz = PathPatternRequestMatcher.withDefaults().matcher("/readyz");
         RequestMatcher actuatorEndpoints = new OrRequestMatcher(
@@ -39,6 +43,7 @@ public class SecurityConfig {
         return http.securityMatcher(actuatorEndpoints)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(metricsAuthenticationProvider)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(EndpointRequest.to("health"), livez, readyz).permitAll()
                         .requestMatchers(EndpointRequest.to("prometheus")).hasRole("METRICS")
