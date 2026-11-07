@@ -2,7 +2,6 @@ package com.opspilot.config;
 
 import com.opspilot.security.JwtAuthenticationFilter;
 import com.opspilot.security.RestAuthenticationEntryPoint;
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,17 +35,21 @@ public class SecurityConfig {
                                                      BCryptPasswordEncoder passwordEncoder) throws Exception {
         DaoAuthenticationProvider metricsAuthenticationProvider = new DaoAuthenticationProvider(metricsUserDetailsService);
         metricsAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+        RequestMatcher actuatorBasePath = PathPatternRequestMatcher.withDefaults().matcher("/actuator/**");
+        RequestMatcher health = PathPatternRequestMatcher.withDefaults().matcher("/actuator/health");
+        RequestMatcher healthSubpaths = PathPatternRequestMatcher.withDefaults().matcher("/actuator/health/**");
+        RequestMatcher prometheus = PathPatternRequestMatcher.withDefaults().matcher("/actuator/prometheus");
         RequestMatcher livez = PathPatternRequestMatcher.withDefaults().matcher("/livez");
         RequestMatcher readyz = PathPatternRequestMatcher.withDefaults().matcher("/readyz");
         RequestMatcher actuatorEndpoints = new OrRequestMatcher(
-                EndpointRequest.toAnyEndpoint(), livez, readyz);
+                actuatorBasePath, livez, readyz);
         return http.securityMatcher(actuatorEndpoints)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(metricsAuthenticationProvider)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(EndpointRequest.to("health"), livez, readyz).permitAll()
-                        .requestMatchers(EndpointRequest.to("prometheus")).hasRole("METRICS")
+                        .requestMatchers(health, healthSubpaths, livez, readyz).permitAll()
+                        .requestMatchers(prometheus).hasRole("METRICS")
                         .anyRequest().denyAll())
                 .httpBasic(Customizer.withDefaults())
                 .build();
