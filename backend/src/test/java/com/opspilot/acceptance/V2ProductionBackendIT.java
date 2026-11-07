@@ -47,6 +47,7 @@ import static org.awaitility.Awaitility.await;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "debug=true",
         "management.server.port=0",
         "management.server.address=127.0.0.1",
         "app.metrics.username=v2-integration-metrics",
