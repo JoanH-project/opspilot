@@ -58,6 +58,9 @@ import static org.awaitility.Awaitility.await;
         "app.auth.rate-limit.account.window=3s"
 })
 class V2ProductionBackendIT {
+    private static final String METRICS_TEST_USERNAME = "v2-integration-metrics";
+    private static final String METRICS_TEST_PASSWORD = "v2-integration-metrics-password";
+
     @Container
     static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.4"))
             .withDatabaseName("opspilot")
@@ -263,11 +266,11 @@ class V2ProductionBackendIT {
                 .isEqualTo(HttpStatus.OK);
         assertThat(client.getForEntity(root + "/actuator/prometheus", String.class).getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
-        HttpHeaders metrics = new HttpHeaders();
-        metrics.setAccept(List.of(MediaType.parseMediaType("text/plain;version=0.0.4;charset=utf-8")));
-        metrics.setBasicAuth("v2-integration-metrics", "v2-integration-metrics-password");
-        assertThat(client.exchange(RequestEntity.get(root + "/actuator/prometheus").headers(metrics).build(), String.class)
-                .getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<String> metricsResponse = client.withBasicAuth(METRICS_TEST_USERNAME, METRICS_TEST_PASSWORD)
+                .exchange(RequestEntity.get(root + "/actuator/prometheus")
+                        .accept(MediaType.parseMediaType("text/plain;version=0.0.4;charset=utf-8")).build(),
+                        String.class);
+        assertThat(metricsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(client.getForEntity(root + "/actuator/env", String.class).getStatusCode())
                 .isIn(HttpStatus.NOT_FOUND, HttpStatus.FORBIDDEN, HttpStatus.UNAUTHORIZED);
     }
