@@ -89,7 +89,7 @@ If the ActivityLog write fails, the business operation must roll back. Idempoten
 
 ## 3.2 V2 status
 
-Implementation is on branch `feat/v2-production-backend`, based on the merged PR #8 head. Redis is scoped to login and registration frequency protection. No V1 API contract, RBAC rule, or V1–V7 migration was changed. The current code/test state, Docker boundary, audit result, and outstanding integration limitations are maintained in [docs/V2_ACCEPTANCE.md](docs/V2_ACCEPTANCE.md) and the operational design in [docs/V2_PRODUCTION_BACKEND.md](docs/V2_PRODUCTION_BACKEND.md).
+Implementation is on branch `feat/v2-production-backend`, based on the merged PR #8 head. The branch is pushed, but PR creation was blocked by GitHub integration permission (403); the compare link and required next action are recorded in [docs/V2_ACCEPTANCE.md](docs/V2_ACCEPTANCE.md). Redis is scoped to login and registration frequency protection. No V1 API contract, RBAC rule, or V1–V7 migration was changed. The current code/test state, Docker boundary, audit result, and outstanding integration limitations are maintained in the acceptance record and the operational design in [docs/V2_PRODUCTION_BACKEND.md](docs/V2_PRODUCTION_BACKEND.md).
 
 The `URGENT` priority enum difference remains an owner decision. V2 does not change it.
 

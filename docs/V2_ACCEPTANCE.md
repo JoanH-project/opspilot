@@ -1,7 +1,7 @@
 # V2 Production Backend — Acceptance Record
 
 - **Updated:** 2026-11-08 (Australia/Sydney)
-- **Status:** `PARTIAL` — local isolated Compose acceptance passed, but the Maven Testcontainers suite cannot initialize Docker through this machine's Java Docker client. Latest-commit GitHub CI and PR review are pending.
+- **Status:** `BLOCKED` — local isolated Compose acceptance passed, but the Maven Testcontainers suite cannot initialize Docker through this machine's Java Docker client. The branch is pushed; GitHub rejected PR creation with `403 Resource not accessible by integration`, so PR checks have not started.
 - **Base:** `c9c6ed3bc8dcc5aee6cbb84616d797005470286b` (`origin/main` at implementation start)
 - **Branch:** `feat/v2-production-backend`
 
@@ -25,7 +25,7 @@ This record reports observed checks only. No V1 migration, V1 API contract, or w
 | Auth R4 regression | **PASS, browser not run** | Frontend component test verifies login success followed by `/api/users/me` failure leaves no token persisted. Real browser fault injection was not available; **BROWSER NOT RUN**. |
 | Frontend install/tests/lint/build | **PASS** | Using already-installed Node 24.19.0: `npm ci`; `npm test` (27 tests in 4 files); `npm run lint`; `npm run build`. The default Node 24.2.0 is below several locked packages' declared engine minimums, so verification used 24.19.0. |
 | npm audit | **10 moderate dev advisories remain** | Current full audit: 0 low, 10 moderate, 0 high, 0 critical. The findings are in development tooling and trace to `minimatch` globparts amplification (GHSA-g3hv-75wg-m249), propagated through ESLint/TypeScript-ESLint. `npm audit --omit=dev` reports 0. npm reports only semver-major tooling changes as fixes; no `--force` update was applied. |
-| GitHub CI | **PENDING** | The updated Backend CI must run `mvn clean verify`, build the Java 21 image, and check its runtime on the pushed V2 head. No result from an older V1 SHA is used as V2 evidence. |
+| GitHub CI | **BLOCKED** | No PR exists, so the required PR workflow has not run. Create a PR from `feat/v2-production-backend` to `main`, then verify Backend CI on the latest head SHA. No result from an older V1 SHA is used as V2 evidence. |
 | Browser acceptance | **NOT RUN** | No browser controller was available in this session. |
 
 ## MySQL and resource boundary
@@ -41,6 +41,12 @@ This record reports observed checks only. No V1 migration, V1 API contract, or w
 - **R4:** the component-level regression passes; browser behavior remains unobserved.
 - **`URGENT` task priority:** the backend enum still includes `URGENT`, while the frozen V1 contract lists `LOW | MEDIUM | HIGH`. Recommendation: keep V1 behavior frozen for this PR and have the owner decide whether support belongs in a separately versioned contract; do not silently change the enum, UI options, or historical data.
 - **Development dependencies:** schedule review of the 10 moderate `minimatch`-related dev-tooling findings. Production dependencies currently have no audit findings. Avoid a forced ESLint/TypeScript-ESLint major change without a separate compatibility review.
+
+## GitHub handoff
+
+- Commit `30e32b9a5b1c80dbbeedc7ae3131de6a4b4c51b2` is pushed to `feat/v2-production-backend`; working tree was clean after the push.
+- The connected GitHub integration returned `403 Resource not accessible by integration` when asked to create the PR. No PR number or URL exists yet; no alternate write path was attempted.
+- Open [the compare page](https://github.com/JoanH-project/opspilot/compare/main...feat/v2-production-backend?expand=1) and create one PR targeting `main`. Then review the current-head Backend CI result before marking it ready or merging.
 
 ## Reference documentation
 
