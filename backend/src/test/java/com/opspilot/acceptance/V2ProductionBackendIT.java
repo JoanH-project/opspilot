@@ -268,7 +268,8 @@ class V2ProductionBackendIT {
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
         ResponseEntity<String> metricsResponse = client.withBasicAuth(METRICS_TEST_USERNAME, METRICS_TEST_PASSWORD)
                 .exchange(RequestEntity.get(root + "/actuator/prometheus")
-                        .accept(MediaType.parseMediaType("text/plain; version=0.0.4; charset=utf-8")).build(),
+                        .accept(MediaType.parseMediaType(
+                                "application/openmetrics-text; version=1.0.0; charset=utf-8")).build(),
                         String.class);
         assertThat(metricsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(client.getForEntity(root + "/actuator/env", String.class).getStatusCode())
