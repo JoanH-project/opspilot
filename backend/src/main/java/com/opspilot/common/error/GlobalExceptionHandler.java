@@ -24,9 +24,13 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.opspilot")
 public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException exception) {
         Map<String, String> fieldErrors = new LinkedHashMap<>();
@@ -84,6 +88,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
+        logger.error("Unhandled API exception", exception);
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());
     }
     private ResponseEntity<ApiError> response(HttpStatus status, String message, Map<String, String> fieldErrors) {
