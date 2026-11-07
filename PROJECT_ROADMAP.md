@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
-> **Updated:** 2026-11-06
-> **Current Milestone:** V1 full-stack foundation — complete (PR #7 merged)
-> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2, F2 hardening, F3 and F4 are merged into `main`. Final Frontend CI passed on PR head `3ce79d7`; V1 follow-ups are recorded below. V2 has not started.
-> **Current Sprint:** V1 post-merge closeout and follow-up tracking
-> **Next Major Milestone:** Owner-defined V2 scope planning; implementation has not started
+> **Updated:** 2026-11-08
+> **Current Milestone:** V2 Production Backend — in progress
+> **Overall Progress:** V1 backend Phases 1–8 and frontend F1–F4 are merged into `main`. V2 Production Backend is in progress on `feat/v2-production-backend`; local verification and blockers are recorded in `docs/V2_ACCEPTANCE.md`.
+> **Current Sprint:** V2 Production Backend implementation and verification
+> **Next Major Milestone:** V2 review and merge after required CI/integration evidence and owner review
 
 ## 1. Project goal
 
@@ -34,6 +34,7 @@ The final goal is **not** a chat UI with an LLM attached. The AI layer must oper
 | 6 | Task / Status / Priority / Assignee / Due Date | ✅ Complete |
 | 7 | Workspace Documents / Knowledge Base foundation | ✅ Complete |
 | 8 | Activity Logs + Dashboard Aggregation | ✅ Complete |
+| V2 | Production configuration / Redis auth protection / observability / service reliability | 🚧 In progress; see `docs/V2_ACCEPTANCE.md` |
 
 Phases 1–8 have been:
 - implemented,
@@ -45,7 +46,7 @@ Phases 1–8 have been:
 
 Phase 8 has been implemented, automatically tested, verified against real MySQL/Flyway V7, and exercised through JWT-authenticated HTTP flows. Verified behavior includes transactional activity recording, feed limits and ordering, dashboard aggregation, overdue-task rules, archive idempotency, tenant isolation, and persisted activity rows.
 
-The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1; no later backend or AI phase has started.
+The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1. V2 Production Backend work is now underway as a separate milestone; AI phases remain out of scope.
 
 The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or explicitly agreed contract changes. The shared frontend reference is `docs/API_CONTRACT.md`.
 
@@ -58,15 +59,15 @@ The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or ex
 - Previously reported isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome flows (81 API responses), including auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. Separately, human F1 acceptance reported backend-unavailable UX and login after service recovery as passing.
 - Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
 - Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) was merged into `main` on 2026-11-06 at merge commit `1c4e65d`. Frontend CI run [42184723079](https://github.com/JoanH-project/opspilot/actions/runs/42184723079) passed on its final head `3ce79d7` (install, 26 tests, lint, and build).
-- V1 is complete and frozen. V2 implementation has not started.
+- V1 is complete and frozen. V2 Production Backend is in progress on `feat/v2-production-backend`; see `docs/V2_ACCEPTANCE.md` for current evidence and gaps.
 
 ### V1 post-merge follow-ups
 
 These items remain visible for separate decisions or verification; they did not block the V1 merge:
 
 - Contract decision: the backend task enum accepts `URGENT`, while the frozen frontend contract lists `LOW`, `MEDIUM`, and `HIGH`; the UI follows the frozen contract.
-- Dependency review: the reported production audit had 0 advisories; the full dependency tree had 13 development dependency advisories (10 moderate, 3 high). No remediation was made in V1.
-- Auth regression R4 from `docs/AUTH_REGRESSION.md` remains unverified: simulate a successful login followed by a failing `GET /api/users/me` and confirm no token is persisted. R1–R3 were reported as passing during human F1 acceptance.
+- Dependency review: V1 was reported with 0 production advisories and 13 development advisories (10 moderate, 3 high). V2 has applied non-force in-range fixes for current high advisories; 10 moderate development advisories remain as recorded in `docs/V2_ACCEPTANCE.md`.
+- Auth regression R4 has a passing frontend component test for login success followed by `/api/users/me` failure and no token persistence. A real browser check was not run in this session. R1–R3 were reported as passing during human F1 acceptance.
 - The consolidated F2–F4 browser run simulated a project-list failure for Retry coverage; the separate human F1 acceptance covered backend-unavailable UX and service recovery.
 - Local backend verification used Java 26 with the Java 21 release target because JDK 21 was unavailable on that machine. The backend CI workflow is configured with Temurin Java 21.
 
@@ -85,6 +86,12 @@ COMMIT
 ```
 
 If the ActivityLog write fails, the business operation must roll back. Idempotent operations such as archiving an already archived resource must not create misleading duplicate activity records.
+
+## 3.2 V2 status
+
+Implementation is on branch `feat/v2-production-backend`, based on the merged PR #8 head. Redis is scoped to login and registration frequency protection. No V1 API contract, RBAC rule, or V1–V7 migration was changed. The current code/test state, Docker boundary, audit result, and outstanding integration limitations are maintained in [docs/V2_ACCEPTANCE.md](docs/V2_ACCEPTANCE.md) and the operational design in [docs/V2_PRODUCTION_BACKEND.md](docs/V2_PRODUCTION_BACKEND.md).
+
+The `URGENT` priority enum difference remains an owner decision. V2 does not change it.
 
 ## 4. Current product architecture
 
@@ -149,20 +156,20 @@ Goal: a complete demonstrable product.
 - Frontend/backend integration
 - Docker-based local demo
 
-**Current version: V1 — complete and frozen; follow-ups are listed in §3.1**
+**Current version: V1 complete and frozen; V2 Production Backend is in progress.**
 
 ### V2 — Production Backend
 
-Add only where there is a concrete scenario:
+Goal: secure, repeatable production-like backend operation without changing the V1 business contract. Current scoped design:
 
-- Redis
-- Message queue
-- Async jobs
-- SSE/streaming where justified
-- Rate limiting
-- Retry/failure handling
-- Stronger observability
-- Docker/service reliability improvements
+- Strong fail-fast `prod` profile for JWT, MySQL TLS, exact CORS, Redis TLS, and management binding
+- Redis Lua-backed shared limits for login and registration only
+- Protected Actuator health and Prometheus metrics on a separate management listener
+- Bounded request ID and privacy-safe request logs
+- Separate local Docker demo and MySQL/Redis integration verification
+- V1 R4 component regression; browser status recorded honestly
+
+No queue, async job, SSE, broad caching, Kubernetes, cloud service, or AI behavior is included because V2 has no workload requiring them.
 
 ### V3 — Knowledge AI / RAG
 
@@ -434,7 +441,7 @@ Codex implementation prompts can remain private between Joan and the assignee. T
 
 ## 10. V1 completion record
 
-The previously merged Member A and Member B work was retained. The consolidated V1 completion was reviewed and merged through PR #7 on 2026-11-06 (`1c4e65d`). No V2 implementation has started.
+The previously merged Member A and Member B work was retained. The consolidated V1 completion was merged through PR #7 and documentation closeout PR #8 on 2026-11-07 (`c9c6ed3`). V2 implementation is tracked separately on `feat/v2-production-backend`.
 
 ### Completed checkpoints
 

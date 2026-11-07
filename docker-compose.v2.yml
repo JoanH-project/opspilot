@@ -1,0 +1,88 @@
+name: opspilot-v2-demo
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: opspilot-v2-mysql
+    environment:
+      MYSQL_DATABASE: ${V2_DB_NAME:-opspilot}
+      MYSQL_USER: ${V2_DB_USERNAME:-opspilot}
+      MYSQL_PASSWORD: ${V2_DB_PASSWORD:?Set V2_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${V2_MYSQL_ROOT_PASSWORD:?Set V2_MYSQL_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:${V2_MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - opspilot_v2_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: opspilot-v2-redis
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${V2_REDIS_PASSWORD:?Set V2_REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:${V2_REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - opspilot_v2_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opspilot-v2-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${V2_DB_NAME:-opspilot}
+      DB_USERNAME: ${V2_DB_USERNAME:-opspilot}
+      DB_PASSWORD: ${V2_DB_PASSWORD:?Set V2_DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${V2_REDIS_PASSWORD:?Set V2_REDIS_PASSWORD}
+      JWT_SECRET: ${V2_JWT_SECRET:?Set V2_JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${V2_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      AUTH_RATE_LIMIT_ENABLED: "true"
+      AUTH_RATE_LIMIT_IP_MAX_ATTEMPTS: ${V2_AUTH_RATE_LIMIT_IP_MAX_ATTEMPTS:-60}
+      AUTH_RATE_LIMIT_IP_WINDOW: ${V2_AUTH_RATE_LIMIT_IP_WINDOW:-60s}
+      AUTH_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS: ${V2_AUTH_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS:-20}
+      AUTH_RATE_LIMIT_ACCOUNT_WINDOW: ${V2_AUTH_RATE_LIMIT_ACCOUNT_WINDOW:-10m}
+      AUTH_RATE_LIMIT_TRUSTED_PROXIES: ${V2_AUTH_RATE_LIMIT_TRUSTED_PROXIES:-}
+      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      MANAGEMENT_SERVER_PORT: 8081
+      METRICS_USERNAME: ${V2_METRICS_USERNAME:-metrics}
+      METRICS_PASSWORD: ${V2_METRICS_PASSWORD:?Set V2_METRICS_PASSWORD}
+    ports:
+      - "127.0.0.1:${V2_BACKEND_HOST_PORT:-8082}:8080"
+      - "127.0.0.1:${V2_MANAGEMENT_HOST_PORT:-8083}:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+    stop_grace_period: 35s
+
+volumes:
+  opspilot_v2_mysql_data:
+    name: opspilot_v2_mysql_data
+  opspilot_v2_redis_data:
+    name: opspilot_v2_redis_data

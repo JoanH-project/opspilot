@@ -78,7 +78,7 @@ class RegistrationTest {
 
     private MockMvc mockMvc(UserStore store) {
         AuthService service = new AuthService(store.repository(), PASSWORD_ENCODER, jwtService());
-        return MockMvcBuilders.standaloneSetup(new AuthController(service))
+        return MockMvcBuilders.standaloneSetup(new AuthController(service, (action, email, request) -> { }))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
