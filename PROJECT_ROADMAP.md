@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
 > **Updated:** 2026-11-06
-> **Current Milestone:** Owner-led V1 full-stack review
-> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2 are merged; F2 hardening and F3/F4 are implemented and locally verified on `feat/opspilot-v1-fullstack-completion`; consolidated PR #7 is open, with final CI and owner review remaining.
-> **Current Sprint:** Review consolidated V1 completion PR #7
-> **Next Major Milestone:** Pass PR checks and complete the owner merge decision; V2 has not started
+> **Current Milestone:** V1 full-stack foundation — complete (PR #7 merged)
+> **Overall Progress:** Backend Phases 1–8 and frontend F1/F2, F2 hardening, F3 and F4 are merged into `main`. Final Frontend CI passed on PR head `3ce79d7`; V1 follow-ups are recorded below. V2 has not started.
+> **Current Sprint:** V1 post-merge closeout and follow-up tracking
+> **Next Major Milestone:** Owner-defined V2 scope planning; implementation has not started
 
 ## 1. Project goal
 
@@ -53,13 +53,22 @@ The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or ex
 
 - Frontend authentication and the F2 workspace/dashboard foundation are present on `main`; PR #6 is merged. Existing contributor commits remain intact.
 - Human browser acceptance for F1 was reported complete by Joan. Do not extend that result to later features.
-- The owner-led completion branch contains the F2 loading/session-race fixes, Projects and Tasks views, workspace Documents views, regression tests, and a frontend CI test step.
-- Local verification passed: frontend `npm test` (26 tests), lint, production build, and backend `mvn clean verify` (38 tests). The backend compiled with `--release 21` using the locally available Java 26 Maven runtime; Java 21 is not installed locally, while backend CI is configured for Java 21.
-- Isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome browser flows (81 API responses). This included auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. A full backend stop/restart recovery was not exercised.
+- The merged V1 completion includes the F2 loading/session-race fixes, Projects and Tasks views, workspace Documents views, regression tests, and a frontend CI test step.
+- Previously reported local verification passed: frontend `npm test` (26 tests), lint, production build, and backend `mvn clean verify` (38 tests). The backend compiled with `--release 21` using the locally available Java 26 Maven runtime; Java 21 was not installed locally. Backend CI is configured for Temurin Java 21.
+- Previously reported isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome flows (81 API responses), including auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. Separately, human F1 acceptance reported backend-unavailable UX and login after service recovery as passing.
 - Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
-- Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) is open against `main`. Check GitHub Actions on its latest head before merging; Joan's review and merge decision remain pending.
-- Do not mark V1 complete or start V2 until remote CI passes and the owner reviews the PR.
-- Contract follow-up: the backend task enum also accepts `URGENT`, while the frozen frontend contract lists `LOW`, `MEDIUM`, and `HIGH`; this UI uses the frozen contract values pending an explicit contract decision.
+- Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) was merged into `main` on 2026-11-06 at merge commit `1c4e65d`. Frontend CI run [42184723079](https://github.com/JoanH-project/opspilot/actions/runs/42184723079) passed on its final head `3ce79d7` (install, 26 tests, lint, and build).
+- V1 is complete and frozen. V2 implementation has not started.
+
+### V1 post-merge follow-ups
+
+These items remain visible for separate decisions or verification; they did not block the V1 merge:
+
+- Contract decision: the backend task enum accepts `URGENT`, while the frozen frontend contract lists `LOW`, `MEDIUM`, and `HIGH`; the UI follows the frozen contract.
+- Dependency review: the reported production audit had 0 advisories; the full dependency tree had 13 development dependency advisories (10 moderate, 3 high). No remediation was made in V1.
+- Auth regression R4 from `docs/AUTH_REGRESSION.md` remains unverified: simulate a successful login followed by a failing `GET /api/users/me` and confirm no token is persisted. R1–R3 were reported as passing during human F1 acceptance.
+- The consolidated F2–F4 browser run simulated a project-list failure for Retry coverage; the separate human F1 acceptance covered backend-unavailable UX and service recovery.
+- Local backend verification used Java 26 with the Java 21 release target because JDK 21 was unavailable on that machine. The backend CI workflow is configured with Temurin Java 21.
 
 ### Phase 8 completion rule
 
@@ -140,7 +149,7 @@ Goal: a complete demonstrable product.
 - Frontend/backend integration
 - Docker-based local demo
 
-**Current version: V1 — final full-stack acceptance pending**
+**Current version: V1 — complete and frozen; follow-ups are listed in §3.1**
 
 ### V2 — Production Backend
 
@@ -265,11 +274,11 @@ Current tasks:
 - [x] Finish owner-led F2 hardening, F3 Projects/Tasks, and F4 Documents
 - [x] Run frontend test/lint/build and backend verification on the current branch head
 - [x] Complete safe local MySQL/HTTP integration and headless Chrome browser checks
-- [ ] Review the consolidated V1 completion PR; owner performs the final merge decision
+- [x] Review PR #7 and complete the owner merge decision; merged to `main` as `1c4e65d`
 
 ### Member A — Frontend / Product Experience
 
-Can start now; does not need to wait for Phase 8.
+Frontend F1/F2 and the initial frontend foundation are complete and merged. F2 hardening and the F3/F4 product flows were completed in PR #7.
 
 Primary ownership:
 - React + TypeScript frontend
@@ -284,15 +293,7 @@ Primary ownership:
 - Responsive/accessibility
 - Later Agent/Knowledge UX
 
-First tasks:
-- [ ] Read `AGENTS.md`, this roadmap and `README.md`
-- [ ] Inspect current REST API surface
-- [ ] Draft V1 route/page map
-- [ ] Draft shared app shell
-- [ ] Define API client strategy
-- [ ] Build Login/Register UI
-- [ ] Build Dashboard skeleton
-- [ ] Identify API contract questions for Joan
+The initial F1/F2 task list is complete. Do not start V2 frontend work until its scope is explicitly defined.
 
 Do not:
 - change backend contracts without agreement,
@@ -302,7 +303,7 @@ Do not:
 
 ### Member B — QA / DevOps / Engineering Enablement
 
-Can start now in parallel.
+The Q3 auth regression checklist was merged in PR #5. Its R4 browser verification remains an open QA handoff in `TEAM_STATUS.md`; assign any additional QA/DevOps work as a scoped task.
 
 Primary ownership:
 - Fresh-clone verification
@@ -312,16 +313,6 @@ Primary ownership:
 - README/onboarding quality
 - V1 integration acceptance checks
 - Later observability/deployment
-
-First tasks:
-- [ ] Read `AGENTS.md`, this roadmap and `README.md`
-- [ ] Verify project can start from a fresh clone
-- [ ] Verify Docker Compose onboarding
-- [ ] Review environment-variable documentation
-- [ ] Build Phase 1–8 API smoke-test checklist
-- [ ] Propose GitHub Actions for `mvn clean test` + build
-- [ ] Identify onboarding/documentation gaps
-- [ ] Prepare V1 frontend/backend acceptance checklist
 
 Do not:
 - add Kubernetes now,
@@ -441,18 +432,18 @@ Do not use README as a project diary.
 
 Codex implementation prompts can remain private between Joan and the assignee. They do not need to be committed to GitHub unless the team later decides to maintain reusable issue templates/specs.
 
-## 10. Current owner-led sprint
+## 10. V1 completion record
 
-The previously merged Member A and Member B work is retained. New implementation and final verification are coordinated on one owner branch so the repository has one consolidated V1 review surface. No contributor's earlier task is retroactively marked failed.
+The previously merged Member A and Member B work was retained. The consolidated V1 completion was reviewed and merged through PR #7 on 2026-11-06 (`1c4e65d`). No V2 implementation has started.
 
-### V1 completion checkpoints
+### Completed checkpoints
 
-1. Fix the known F2 first-load and session-change regressions.
-2. Complete project list/create/edit/archive and project-scoped task flows.
-3. Complete workspace document list/create/detail/edit/preview/archive.
-4. Run Vitest, lint, build, backend verification, and the available isolated local integration checks.
-5. Update the smoke checklist, README, `TEAM_STATUS.md`, and this roadmap with observed results.
-6. Push one consolidated PR against `main`; do not merge until Joan reviews it.
+1. [x] Fix the known F2 first-load and session-change regressions.
+2. [x] Complete project list/create/edit/archive and project-scoped task flows.
+3. [x] Complete workspace document list/create/detail/edit/preview/archive.
+4. [x] Run frontend tests, lint, build, backend verification, and available isolated local integration checks.
+5. [x] Update the smoke checklist, README, `TEAM_STATUS.md`, and this roadmap with observed results.
+6. [x] Pass final Frontend CI on the PR head and merge the consolidated PR into `main`.
 
 ## 11. V1 page scope
 
@@ -507,7 +498,7 @@ F1 authentication and F2 workspace/dashboard implementation are merged. Preserve
 
 ### Milestone 3 — V1 full-stack completion
 
-Projects, tasks, documents, frontend regression coverage, and local integration have passed on the owner feature branch. PR #7 is open; this milestone remains pending remote CI and owner review. No V2 work is authorized by this milestone.
+Complete and merged to `main` through PR #7 on 2026-11-06. Final Frontend CI passed on the PR head. The remaining verification and contract/dependency decisions are listed under §3.1; they do not change V1's completed status. V2 has not started.
 
 ### V1 Full-stack demo flow
 
