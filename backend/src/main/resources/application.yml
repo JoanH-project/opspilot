@@ -69,6 +69,10 @@ server:
     connection-timeout: 5s
 
 management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
   server:
     port: ${MANAGEMENT_SERVER_PORT:8081}
     address: ${MANAGEMENT_SERVER_ADDRESS:127.0.0.1}
