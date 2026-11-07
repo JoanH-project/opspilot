@@ -1,7 +1,7 @@
 # V2 Production Backend — Acceptance Record
 
 - **Updated:** 2026-11-08 (Australia/Sydney)
-- **Status:** `READY FOR REVIEW` — current-head GitHub CI passed on `24e48108df5514cccde737c6fe630e746c9ca33b`. PR #9 is open and has not been merged.
+- **Status:** `READY FOR REVIEW` — PR #9 is open and not merged; backend and frontend CI passed after the final application and documentation updates.
 - **Base:** `c9c6ed3bc8dcc5aee6cbb84616d797005470286b` (`origin/main` at implementation start)
 - **Branch:** `feat/v2-production-backend`
 
@@ -25,7 +25,7 @@ This record reports observed checks only. No V1 migration, V1 API contract, or w
 | Auth R4 regression | **PASS, browser not run** | Frontend component test verifies login success followed by `/api/users/me` failure leaves no token persisted. Real browser fault injection was not available; **BROWSER NOT RUN**. |
 | Frontend install/tests/lint/build | **PASS** | Using already-installed Node 24.19.0: `npm ci`; `npm test` (27 tests in 4 files); `npm run lint`; `npm run build`. The default Node 24.2.0 is below several locked packages' declared engine minimums, so verification used 24.19.0. |
 | npm audit | **10 moderate dev advisories remain** | Current full audit: 0 low, 10 moderate, 0 high, 0 critical. The findings are in development tooling and trace to `minimatch` globparts amplification (GHSA-g3hv-75wg-m249), propagated through ESLint/TypeScript-ESLint. `npm audit --omit=dev` reports 0. npm reports only semver-major tooling changes as fixes; no `--force` update was applied. |
-| GitHub CI | **PASS** | PR #9 current head `24e48108df5514cccde737c6fe630e746c9ca33b`: backend verify (unit + Testcontainers integration), Java 21 backend image build/runtime check, and frontend install/test/lint/build jobs all passed. |
+| GitHub CI | **PASS** | PR #9: backend verify (unit + Testcontainers integration), Java 21 backend image build/runtime check, and frontend install/test/lint/build jobs all passed on the final handoff changes. |
 | Browser acceptance | **NOT RUN** | No browser controller was available in this session. |
 
 ## MySQL and resource boundary
@@ -44,8 +44,8 @@ This record reports observed checks only. No V1 migration, V1 API contract, or w
 
 ## GitHub handoff
 
-- Latest verified commit `24e48108df5514cccde737c6fe630e746c9ca33b` is pushed to `feat/v2-production-backend`; the working tree was clean before this acceptance-record update.
-- [PR #9](https://github.com/JoanH-project/opspilot/pull/9) targets `main`, is open, and is not merged. Backend and frontend CI passed on this head.
+- All implementation and handoff changes are pushed to `feat/v2-production-backend`; the working tree is clean after the handoff commit.
+- [PR #9](https://github.com/JoanH-project/opspilot/pull/9) targets `main`, is open, and is not merged. Backend and frontend CI passed on the final handoff changes.
 - Do not merge as part of this verification. `URGENT` priority and development-tool audit advisories remain separate owner/review follow-ups.
 
 ## Reference documentation
