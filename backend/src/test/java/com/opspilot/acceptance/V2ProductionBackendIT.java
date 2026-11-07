@@ -27,7 +27,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +49,8 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "management.server.port=0",
         "management.server.address=127.0.0.1",
+        "app.metrics.username=v2-integration-metrics",
+        "app.metrics.password=v2-integration-metrics-password",
         "app.auth.rate-limit.enabled=true",
         "app.auth.rate-limit.ip.max-attempts=1000",
         "app.auth.rate-limit.ip.window=30s",
@@ -77,7 +78,6 @@ class V2ProductionBackendIT {
     }
 
     @Autowired TestRestTemplate client;
-    @Autowired Environment environment;
     @LocalServerPort int apiPort;
     @LocalManagementPort int managementPort;
 
@@ -152,7 +152,7 @@ class V2ProductionBackendIT {
                     .isEqualTo(HttpStatus.UNAUTHORIZED);
         }
         ResponseEntity<String> limited = login("limit-v2@example.com", "wrong-password", HttpStatus.TOO_MANY_REQUESTS);
-        assertThat(limited.getHeaders().getFirst(RETRY_AFTER)).isNotBlank();
+        assertThat(Long.parseLong(limited.getHeaders().getFirst(RETRY_AFTER))).isBetween(1L, 3L);
         assertThat(limited.getBody()).contains("Too many authentication attempts");
         await().atMost(Duration.ofSeconds(6)).untilAsserted(() ->
                 assertThat(login("limit-v2@example.com", "wrong-password", HttpStatus.UNAUTHORIZED).getStatusCode())
@@ -236,9 +236,10 @@ class V2ProductionBackendIT {
                         .check(AuthAction.LOGIN, "account-" + attempt + "@example.test", request);
             }
 
-            assertThrows(TooManyAuthenticationAttemptsException.class,
+            TooManyAuthenticationAttemptsException blocked = assertThrows(TooManyAuthenticationAttemptsException.class,
                     () -> second.check(AuthAction.LOGIN, "another-account@example.test",
                             requestFrom("198.51.100.55")));
+            assertThat(blocked.getRetryAfterSeconds()).isBetween(1L, 20L);
         } finally {
             firstFactory.destroy();
             secondFactory.destroy();
@@ -264,8 +265,7 @@ class V2ProductionBackendIT {
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
         HttpHeaders metrics = new HttpHeaders();
         metrics.setAccept(List.of(MediaType.parseMediaType("text/plain;version=0.0.4;charset=utf-8")));
-        metrics.setBasicAuth(environment.getProperty("app.metrics.username", "metrics"),
-                environment.getProperty("app.metrics.password", "local-prometheus-change-me"));
+        metrics.setBasicAuth("v2-integration-metrics", "v2-integration-metrics-password");
         assertThat(client.exchange(RequestEntity.get(root + "/actuator/prometheus").headers(metrics).build(), String.class)
                 .getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(client.getForEntity(root + "/actuator/env", String.class).getStatusCode())

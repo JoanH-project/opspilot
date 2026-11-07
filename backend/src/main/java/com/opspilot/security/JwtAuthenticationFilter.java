@@ -45,23 +45,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        Long userId;
         try {
-            Long userId = jwtService.extractUserId(token);
-            User user = userRepository.findById(userId).orElse(null);
-            if (user == null) {
-                errorWriter.write(response, "Invalid or expired access token");
-                return;
-            }
-            var authentication = new UsernamePasswordAuthenticationToken(user.getId(), null, java.util.List.of());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            filterChain.doFilter(request, response);
+            userId = jwtService.extractUserId(token);
+        } catch (RuntimeException exception) {
+            errorWriter.write(response, "Invalid or expired access token");
+            return;
+        }
+
+        User user;
+        try {
+            user = userRepository.findById(userId).orElse(null);
         } catch (DataAccessException | TransactionException exception) {
             SecurityContextHolder.clearContext();
             errorWriter.writeUnavailable(response);
-        } catch (RuntimeException exception) {
-            SecurityContextHolder.clearContext();
-            errorWriter.write(response, "Invalid or expired access token");
+            return;
         }
+        if (user == null) {
+            errorWriter.write(response, "Invalid or expired access token");
+            return;
+        }
+
+        var authentication = new UsernamePasswordAuthenticationToken(user.getId(), null, java.util.List.of());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        filterChain.doFilter(request, response);
     }
 }

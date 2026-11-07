@@ -24,12 +24,20 @@ public class RedisAuthRateLimiter implements AuthRateLimiter {
             local ipWindow = tonumber(ARGV[2])
             local accountLimit = tonumber(ARGV[3])
             local accountWindow = tonumber(ARGV[4])
-            if ipCount >= ipLimit or accountCount >= accountLimit then
-              local ipTtl = redis.call('TTL', KEYS[1])
-              local accountTtl = redis.call('TTL', KEYS[2])
-              local retryAfter = math.max(ipTtl, accountTtl)
+            local ipBlocked = ipCount >= ipLimit
+            local accountBlocked = accountCount >= accountLimit
+            if ipBlocked or accountBlocked then
+              local retryAfter = 0
+              if ipBlocked then retryAfter = math.max(retryAfter, redis.call('TTL', KEYS[1])) end
+              if accountBlocked then retryAfter = math.max(retryAfter, redis.call('TTL', KEYS[2])) end
               if retryAfter < 1 then
-                retryAfter = math.max(ipWindow, accountWindow)
+                if ipBlocked and accountBlocked then
+                  retryAfter = math.max(ipWindow, accountWindow)
+                elseif ipBlocked then
+                  retryAfter = ipWindow
+                else
+                  retryAfter = accountWindow
+                end
               end
               return retryAfter
             end
