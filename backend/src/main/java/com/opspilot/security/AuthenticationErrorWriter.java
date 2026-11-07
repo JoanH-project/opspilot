@@ -17,9 +17,18 @@ public class AuthenticationErrorWriter {
     public AuthenticationErrorWriter(ObjectMapper objectMapper) { this.objectMapper = objectMapper; }
 
     public void write(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        write(response, HttpStatus.UNAUTHORIZED, message);
+    }
+
+    public void writeUnavailable(HttpServletResponse response) throws IOException {
+        write(response, HttpStatus.SERVICE_UNAVAILABLE,
+                "A required service is temporarily unavailable");
+    }
+
+    private void write(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+        response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), new ApiError(Instant.now(),
-                HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), message, Map.of()));
+                status.value(), status.getReasonPhrase(), message, Map.of()));
     }
 }

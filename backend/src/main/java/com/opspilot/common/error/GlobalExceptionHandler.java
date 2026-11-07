@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.opspilot.auth.DuplicateEmailException;
 import com.opspilot.auth.InvalidCredentialsException;
+import com.opspilot.auth.ratelimit.AuthenticationProtectionUnavailableException;
+import com.opspilot.auth.ratelimit.TooManyAuthenticationAttemptsException;
 import com.opspilot.activity.InvalidActivityLimitException;
 import com.opspilot.workspace.InsufficientWorkspaceRoleException;
 import com.opspilot.workspace.WorkspaceNotFoundException;
@@ -14,14 +16,21 @@ import com.opspilot.document.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.TransactionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.opspilot")
 public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException exception) {
         Map<String, String> fieldErrors = new LinkedHashMap<>();
@@ -37,6 +46,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception) {
         return response(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(TooManyAuthenticationAttemptsException.class)
+    ResponseEntity<ApiError> handleRateLimit(TooManyAuthenticationAttemptsException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.getRetryAfterSeconds()))
+                .body(new ApiError(Instant.now(), HttpStatus.TOO_MANY_REQUESTS.value(),
+                        HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase(), exception.getMessage(), Map.of()));
+    }
+    @ExceptionHandler({AuthenticationProtectionUnavailableException.class, DataAccessException.class,
+            TransactionException.class})
+    ResponseEntity<ApiError> handleDependencyUnavailable(Exception exception) {
+        return response(HttpStatus.SERVICE_UNAVAILABLE,
+                "A required service is temporarily unavailable", Map.of());
     }
     @ExceptionHandler(WorkspaceNotFoundException.class)
     ResponseEntity<ApiError> handleWorkspaceNotFound(WorkspaceNotFoundException exception) {
@@ -66,6 +88,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {
+        logger.error("Unhandled API exception", exception);
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());
     }
     private ResponseEntity<ApiError> response(HttpStatus status, String message, Map<String, String> fieldErrors) {
