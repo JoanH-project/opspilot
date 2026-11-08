@@ -6,10 +6,20 @@ on:
       - main
     paths:
       - 'backend/**'
+      - 'docker-compose.v2.yml'
+      - 'README.md'
+      - 'PROJECT_ROADMAP.md'
+      - 'TEAM_STATUS.md'
+      - 'docs/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - 'docker-compose.v2.yml'
+      - 'README.md'
+      - 'PROJECT_ROADMAP.md'
+      - 'TEAM_STATUS.md'
+      - 'docs/**'
       - '.github/workflows/backend-ci.yml'
 
 jobs:
@@ -30,5 +40,12 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Verify backend
+      - name: Verify backend (unit + Testcontainers integration)
         run: mvn clean verify
+
+      - name: Build Java 21 backend image
+        working-directory: .
+        run: docker build -f backend/Dockerfile -t opspilot-backend-ci:${{ github.sha }} backend
+
+      - name: Confirm Java 21 runtime in image
+        run: docker run --rm --entrypoint java opspilot-backend-ci:${{ github.sha }} -version

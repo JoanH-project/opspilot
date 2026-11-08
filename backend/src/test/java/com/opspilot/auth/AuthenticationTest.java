@@ -146,7 +146,7 @@ class AuthenticationTest {
     }
 
     private MockMvc mockMvc(AuthService service) {
-        return MockMvcBuilders.standaloneSetup(new AuthController(service))
+        return MockMvcBuilders.standaloneSetup(new AuthController(service, (action, email, request) -> { }))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 

@@ -96,6 +96,24 @@ Minimum for local full-stack development:
 
 Copy the repository root `.env.example` to `.env` for Docker Compose. Copy `frontend/.env.example` to `frontend/.env` for the Vite app. Export `DB_PASSWORD` in your shell (or IDE run config) before starting the backend.
 
+## V2 production-backend demo (isolated services)
+
+V2 adds a separate MySQL 8.4 + Redis 7.4 + backend demo. It uses loopback ports 3307/6379/8082/8083 and uniquely named V2 containers/volumes; the original MySQL service on 3306 is unaffected. See [docs/V2_PRODUCTION_BACKEND.md](docs/V2_PRODUCTION_BACKEND.md) for production settings and failure drills.
+
+```bash
+export V2_DB_PASSWORD="$(openssl rand -hex 24)"
+export V2_MYSQL_ROOT_PASSWORD="$(openssl rand -hex 24)"
+export V2_REDIS_PASSWORD="$(openssl rand -hex 24)"
+export V2_JWT_SECRET="$(openssl rand -base64 48 | tr '+/' '-_' | tr -d '=\n')"
+export V2_METRICS_PASSWORD="$(openssl rand -base64 48 | tr '+/' '-_' | tr -d '=\n')"
+docker compose -f docker-compose.v2.yml up -d --build
+docker compose -f docker-compose.v2.yml ps
+curl http://localhost:8082/api/health
+curl http://localhost:8083/actuator/health
+```
+
+Stop only the V2 demo with `docker compose -f docker-compose.v2.yml down`. The default `docker compose down` command below still applies only to the original MySQL development stack. Never prune or delete the original `opspilot_mysql_data` volume as part of V2 work.
+
 ## Register, log in, and get the current user
 
 For non-local deployments, set a strong JWT secret:
@@ -244,11 +262,12 @@ its status is not `DONE`.
 Backend (`backend/`):
 
 ```bash
-mvn clean test     # 38 automated tests; no running MySQL required
+mvn clean test     # unit tests; no running MySQL or Redis required
+mvn clean verify   # unit tests plus Testcontainers MySQL 8.4 / Redis 7.4 integration tests
 mvn package        # builds the runnable JAR after tests pass
 ```
 
-Backend CI uses `mvn clean verify`.
+`mvn clean verify` requires a working Docker daemon. Backend CI runs the full Testcontainers verification and builds the Java 21 runtime image.
 
 Frontend (`frontend/`):
 
@@ -278,6 +297,8 @@ Frontend CI runs the same four commands with Node 22, which meets the minimum No
 | `docs/FRONTEND_SMOKE_TEST.md` | Human frontend acceptance checklist |
 | `docs/AUTH_REGRESSION.md` | Auth Stabilization regression checks (post PR #4) |
 | `docs/ENVIRONMENT.md` | Environment variable reference |
+| `docs/V2_PRODUCTION_BACKEND.md` | V2 production configuration, Redis limiter, observability, and isolated demo |
+| `docs/V2_ACCEPTANCE.md` | V2 verification evidence and open blockers |
 | `frontend/README.md` | Frontend-specific setup and development |
 | `AGENTS.md` | Long-lived engineering rules |
 | `PROJECT_ROADMAP.md` | Architecture, milestones, team ownership |
