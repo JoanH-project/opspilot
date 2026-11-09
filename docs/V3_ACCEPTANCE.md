@@ -4,7 +4,7 @@
 - **Status:** `PARTIAL — core live path passes; retrieval negative cases, browser QA, and current-head CI remain`
 - **Base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (merge of PR #9 on `origin/main`)
 - **Branch:** `feat/v3-knowledge-rag`
-- **V3 PR / current-head CI:** pending; no V3 PR has been opened yet
+- **V3 PR / current-head CI:** branch pushed at `dae7331`; PR creation blocked by GitHub integration 403; no CI runs/statuses are available yet
 
 This record distinguishes automated checks from end-to-end service acceptance. The isolated E5/Qdrant/Ollama/Spring/HTTP path has now been exercised locally. V3 remains incomplete: the retrieval evaluation returns irrelevant matches for all three negative queries, browser acceptance has not been run, and current-head CI has not run.
 
@@ -16,6 +16,7 @@ This record distinguishes automated checks from end-to-end service acceptance. T
 | Frontend lint/tests/build | **PASS** | Node 24.19.0 / npm 11.3.0; lint passed, 32 tests in 5 files passed, and the Vite production build passed. Tests include workspace-switch cancellation and no replay of an old question into a newly selected workspace. |
 | Backend unit tests/package | **PASS** | `mvn clean test`: 54 tests, no failures/errors/skips; `mvn package` passed. Compiled with Java release target 21; Maven itself ran on local JDK 26.0.2. |
 | Backend Testcontainers integration | **BLOCKED LOCALLY** | `mvn clean verify` passed unit tests, then failed at `V2ProductionBackendIT`: Testcontainers received HTTP 400 with empty Docker daemon metadata. This is a local Docker Desktop/Testcontainers environment failure, not a failing assertion. CI remains pending. |
+| Pushed branch / PR / CI | **PARTIAL** | `feat/v3-knowledge-rag` is pushed at `dae7331`. GitHub PR creation returned `403 Resource not accessible by integration`; local `gh auth status` reports its token is invalid. GitHub status and workflow-run queries for this SHA returned no checks/runs. |
 | Isolated V3 stack / migrations | **PASS** | MySQL 8.4, Redis, Qdrant, FastAPI, Ollama, and backend started with unique V3 container/volume names. Flyway V1–V8 and Hibernate schema validation passed; `GET /api/health` returned `200 {"status":"UP"}`. The original MySQL container/volume were not used. |
 | Index lifecycle / retrieval | **PASS** | A real document moved from MySQL outbox `PENDING` to `READY`; pinned E5 weights loaded and Qdrant returned a workspace-scoped passage. Editing verified only the current revision could be returned; archive tombstones removed the document from search. Non-member access returned 401. |
 | Grounded answers / model outage | **PASS** | Warm and cold Ask flows returned a grounded answer with a server-verified current citation; an unsupported question returned `INSUFFICIENT_EVIDENCE` with no sources. During an Ollama-only outage, passage search still succeeded and Ask returned sanitized 503; Ask recovered after restart. The measured cold Ask completed in 137.8 seconds with the 300-second timeout. |
@@ -35,6 +36,7 @@ Run remaining checks only with the isolated `docker-compose.v3.yml` resources. P
 - [ ] Exercise prompt-injection text in a synthetic document through the live Ask flow; verify the model treats it as untrusted evidence.
 - [ ] Verify retry/backoff reaches bounded `FAILED`; OWNER/ADMIN reindex returns `202`, MEMBER receives `403`, a workspace over 500 active docs gets `413`, and cooldown returns `429` plus `Retry-After`.
 - [ ] Run current-head backend, AI service, and frontend CI on the pushed PR branch. The local Testcontainers failure must be distinguished from CI results.
+- [ ] Create a draft PR from `feat/v3-knowledge-rag` to `main` after GitHub PR write access is restored, then record its current-head CI result here.
 
 ## Scope and data boundary
 
