@@ -107,6 +107,15 @@ class WorkspaceKnowledgeServiceTest {
     }
 
     @Test
+    void ownerCannotReindexMoreThanFiveHundredActiveDocuments() {
+        when(access.requireAdminOrOwner(7L, 5L)).thenReturn(null);
+        when(documents.countByWorkspace_IdAndStatus(7L, DocumentStatus.ACTIVE)).thenReturn(501L);
+
+        assertThrows(KnowledgeReindexTooLargeException.class, () -> service.reindex(7L, 5L));
+        verify(limiter, never()).tryAcquire(any());
+    }
+
+    @Test
     void memberCannotTriggerReindexAndOwnerQueuesOnlyActiveDocuments() throws Exception {
         when(access.requireAdminOrOwner(7L, 6L)).thenThrow(new InsufficientWorkspaceRoleException());
         assertThrows(InsufficientWorkspaceRoleException.class, () -> service.reindex(7L, 6L));

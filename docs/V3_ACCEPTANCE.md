@@ -1,46 +1,44 @@
 # V3 Knowledge / RAG — Acceptance Record
 
 - **Updated:** 2026-11-09 (Australia/Sydney)
-- **Status:** `PARTIAL — core live path passes; retrieval negative cases, browser QA, and current-head CI remain`
-- **Base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (merge of PR #9 on `origin/main`)
+- **Status:** `PARTIAL — core local, browser, and retrieval flows pass; current-head CI and several live boundary checks remain`
+- **Base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (PR #9 merge on `origin/main`)
 - **Branch:** `feat/v3-knowledge-rag`
-- **V3 PR / current-head CI:** branch pushed at `dae7331`; PR creation blocked by GitHub integration 403; no CI runs/statuses are available yet
+- **PR:** [#10](https://github.com/JoanH-project/opspilot/pull/10), open to `main`, not merged
+- **Last observed CI head:** `e4e4842`; Frontend CI and AI Service CI passed. Backend CI exposed a faulty test helper that selected a nested `creator.id` instead of the top-level project ID. The helper now parses JSON structurally and has a regression test; CI for the follow-up commit must be checked after push.
 
-This record distinguishes automated checks from end-to-end service acceptance. The isolated E5/Qdrant/Ollama/Spring/HTTP path has now been exercised locally. V3 remains incomplete: the retrieval evaluation returns irrelevant matches for all three negative queries, browser acceptance has not been run, and current-head CI has not run.
+This record separates local and browser observations from CI results. V3 remains in progress. Do not merge or start V4 until the remaining checks and review gates are resolved.
 
 ## Verification observed locally
 
 | Area | Result | Evidence |
 |---|---|---|
-| Python lock/lint/tests | **PASS** | `uv lock --check`; Ruff passed; 17 pytest tests passed. The embedded-Qdrant test warns that payload indexes are inactive in local mode; pytest also warned its cache could not be written. CI uses server Qdrant for its vector-store test. |
-| Frontend lint/tests/build | **PASS** | Node 24.19.0 / npm 11.3.0; lint passed, 32 tests in 5 files passed, and the Vite production build passed. Tests include workspace-switch cancellation and no replay of an old question into a newly selected workspace. |
-| Backend unit tests/package | **PASS** | `mvn clean test`: 54 tests, no failures/errors/skips; `mvn package` passed. Compiled with Java release target 21; Maven itself ran on local JDK 26.0.2. |
-| Backend Testcontainers integration | **BLOCKED LOCALLY** | `mvn clean verify` passed unit tests, then failed at `V2ProductionBackendIT`: Testcontainers received HTTP 400 with empty Docker daemon metadata. This is a local Docker Desktop/Testcontainers environment failure, not a failing assertion. CI remains pending. |
-| Pushed branch / PR / CI | **PARTIAL** | `feat/v3-knowledge-rag` is pushed at `dae7331`. GitHub PR creation returned `403 Resource not accessible by integration`; local `gh auth status` reports its token is invalid. GitHub status and workflow-run queries for this SHA returned no checks/runs. |
-| Isolated V3 stack / migrations | **PASS** | MySQL 8.4, Redis, Qdrant, FastAPI, Ollama, and backend started with unique V3 container/volume names. Flyway V1–V8 and Hibernate schema validation passed; `GET /api/health` returned `200 {"status":"UP"}`. The original MySQL container/volume were not used. |
-| Index lifecycle / retrieval | **PASS** | A real document moved from MySQL outbox `PENDING` to `READY`; pinned E5 weights loaded and Qdrant returned a workspace-scoped passage. Editing verified only the current revision could be returned; archive tombstones removed the document from search. Non-member access returned 401. |
-| Grounded answers / model outage | **PASS** | Warm and cold Ask flows returned a grounded answer with a server-verified current citation; an unsupported question returned `INSUFFICIENT_EVIDENCE` with no sources. During an Ollama-only outage, passage search still succeeded and Ask returned sanitized 503; Ask recovered after restart. The measured cold Ask completed in 137.8 seconds with the 300-second timeout. |
-| CORS | **PASS** | Browser-origin preflight from `http://localhost:5173` to the backend returned 200 with the expected origin, methods, and headers. This is an API preflight check, not browser acceptance. |
-| E5/Qdrant retrieval evaluation | **PARTIAL / FAILS NEGATIVE CASES** | Real run recorded in [`docs/evaluation/v3-local-2026-11-09.json`](evaluation/v3-local-2026-11-09.json): 7 synthetic documents / 8 queries; Recall@5 1.0, Hit@5 1.0, MRR@5 1.0 for positive queries, but negative queries empty `0/3`. Maximum negative score is 0.7622 while one positive paraphrase scores 0.741. Do not tune the score threshold on this tiny corpus alone. |
-| Browser UI acceptance | **NOT RUN** | No V3 browser interaction was performed in this session. Frontend unit tests/build do not establish browser behavior. |
-| Frozen V1 contract/migrations | **PASS** | `docs/API_CONTRACT.md` and migrations V1–V7 have no diff. Only V8 is added. |
-| Local credentials | **PASS / ROTATED** | A generated local internal token was rotated after it appeared in diagnostic output. `.env.v3` is ignored and not tracked; no credential value is recorded here. |
-| `git diff --check` | **PASS** | Re-run after any remaining PR/CI status edits and before commit. |
+| AI service lock, lint, and tests | **PASS** | `uv lock --check`; Ruff passed; 18 pytest tests passed. Embedded Qdrant warns that payload indexes are inactive in local mode; the server-Qdrant test remains covered by CI. |
+| Frontend lint, tests, and build | **PASS** | The unchanged frontend passed lint, 32 tests in 5 files, and Vite production build. No frontend source was changed during this follow-up. |
+| Backend unit tests and package | **PASS** | `mvn clean package`: 55 tests, no failures/errors/skips; Java compiler release target 21. Docker rebuilt the isolated backend image successfully from its Java 21 build image. |
+| Backend Testcontainers integration | **BLOCKED LOCALLY** | `mvn clean verify` passes unit tests but Testcontainers cannot validate this Docker Desktop daemon: the selected Docker socket returns HTTP 400 with empty daemon metadata. `docker compose` itself works. The explicit `DOCKER_HOST` retry produced the same local Testcontainers failure. |
+| Previous PR #10 CI head | **MIXED** | At `e4e4842`, [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42581519461) and [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42581519507) passed. [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42581519462) failed because the acceptance-test JSON helper selected a nested ID. The fix is included here; check all workflows again on the new PR head. |
+| Isolated V3 stack and migrations | **PASS** | Isolated MySQL 8.4, Redis, Qdrant, Ollama, AI service, and Spring backend ran together. Flyway V1–V8 and Hibernate validation passed; `GET /api/health` returned `200 {"status":"UP"}`. The pre-existing MySQL container and volume were not used. |
+| Browser registration and workspace flow | **PASS** | Automated browser session registered/logged in, created a workspace and document, indexed it, and used workspace-scoped search. This is agent-controlled browser evidence, not human acceptance. |
+| Grounded Ask and safety | **PASS, with latency caveat** | Ask returned the current runbook answer and citation while ignoring an instruction embedded in the document. An unsupported private-address question returned `NOT ENOUGH EVIDENCE` without sources. Under concurrent model/evaluation load one Ask returned a sanitized 503; retry after the stack was idle succeeded in 32.1 seconds. |
+| Reindex and cooldown | **PASS** | Browser-origin owner request returned `202`; a rapid second request returned `429` and the browser could read `Retry-After: 300` after the CORS fix. |
+| CORS | **PASS** | Real browser-origin API requests from `http://localhost:5173` to `http://localhost:8084` succeeded. The configured origin now exposes `Retry-After` in addition to `X-Request-Id`. |
+| Reindex authorization and bounds | **PARTIAL** | Service tests cover MEMBER denial, the 501-active-document rejection before limiter acquisition, and bounded retry exhaustion to `FAILED`. Owner `202` and cooldown `429` were observed live; MEMBER `403`, over-limit `413`, and exhausted worker retries were not exercised as live HTTP flows. |
+| Retrieval evaluation | **PASS ON THE FIXTURE** | [`docs/evaluation/v3-local-2026-11-09.json`](evaluation/v3-local-2026-11-09.json) records 13 synthetic document revisions and 23 labeled queries (15 positive, 8 negative), using `intfloat/multilingual-e5-small` and cutoff `0.81`: Recall@5 `1.0`, Hit@5 `1.0`, MRR@5 `0.9333`, negative queries empty `8/8`. Lowest positive score is `0.8265`; highest negative candidate is `0.794`. These small synthetic results are regression evidence, not a production quality claim. |
+| Frozen V1 contract | **PASS** | No API contract change and no edits to migrations V1–V7. V8 remains the only V3 migration. |
+| Secret handling | **PASS** | `.env.v3` remains ignored and untracked. No local credential values are recorded in repository files. |
+| `git diff --check` | **PASS** | Re-run after final documentation/commit changes. |
 
-## Remaining live acceptance gates
+## Remaining acceptance gates
 
-Run remaining checks only with the isolated `docker-compose.v3.yml` resources. Preserve the original `opspilot-mysql` container and `opspilot_mysql_data` volume.
-
-- [ ] Improve negative-query behavior using an expanded and labeled corpus, then rerun the E5/Qdrant evaluation. Keep positive recall in view; do not choose a threshold solely to fit the current 8 queries.
-- [ ] In a browser, verify safe text rendering, citation navigation, loading/error/retry states, owner-only reindex control, and no response/cache carryover on user/workspace switch.
-- [ ] Exercise prompt-injection text in a synthetic document through the live Ask flow; verify the model treats it as untrusted evidence.
-- [ ] Verify retry/backoff reaches bounded `FAILED`; OWNER/ADMIN reindex returns `202`, MEMBER receives `403`, a workspace over 500 active docs gets `413`, and cooldown returns `429` plus `Retry-After`.
-- [ ] Run current-head backend, AI service, and frontend CI on the pushed PR branch. The local Testcontainers failure must be distinguished from CI results.
-- [ ] Create a draft PR from `feat/v3-knowledge-rag` to `main` after GitHub PR write access is restored, then record its current-head CI result here.
+- [ ] Push the scoped follow-up to `feat/v3-knowledge-rag` and confirm Backend, AI Service, and Frontend CI on the latest PR #10 head.
+- [ ] Run live HTTP checks for MEMBER `403`, the over-500-document `413`, and retry exhaustion to `FAILED`; existing service tests cover these rules but are not a substitute for live integration evidence.
+- [ ] Resolve or explicitly accept the local Docker Desktop/Testcontainers incompatibility. Do not misreport the local `mvn clean verify` result as passing; use current-head CI as the integration result once it passes.
+- [ ] Keep PR #10 open for human review. Do not merge it or start V4 as part of this acceptance task.
 
 ## Scope and data boundary
 
 - MySQL is the source of truth; Qdrant data is derived and rebuildable.
 - Spring owns authentication, authorization, and current-document/revision checks. The Python service is private and accepts only internal-token requests.
-- The app uses local E5 embeddings and Ollama generation. No paid AI API or cloud inference is configured.
+- Embeddings and generation use local E5 and Ollama; no paid AI API or cloud inference is configured.
 - V1 API contract and migrations V1–V7 are frozen. V4 Agent work has not started.

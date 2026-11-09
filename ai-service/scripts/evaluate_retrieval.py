@@ -109,6 +109,7 @@ async def evaluate() -> dict:
             "qdrant_version": root.get("version"),
             "collection": collection,
             "top_k": 5,
+            "search_min_score": settings.search_min_score,
             "recall_at_5": round(found_relevant / relevant_total, 4) if relevant_total else None,
             "hit_at_5": round(
                 sum(case["hit_at_5"] for case in positive_cases) / len(positive_cases), 4

@@ -71,7 +71,7 @@ services:
       AI_OLLAMA_MODEL: qwen2.5:1.5b-instruct
       AI_EMBEDDING_MODEL: intfloat/multilingual-e5-small
       AI_EMBEDDING_REVISION: 614241f622f53c4eeff9890bdc4f31cfecc418b3
-      AI_SEARCH_MIN_SCORE: ${V3_KNOWLEDGE_MIN_SCORE:-0.70}
+      AI_SEARCH_MIN_SCORE: ${V3_KNOWLEDGE_MIN_SCORE:-0.81}
       AI_MODEL_CACHE_DIR: /var/cache/huggingface
       AI_OLLAMA_TIMEOUT_SECONDS: 300
     expose:

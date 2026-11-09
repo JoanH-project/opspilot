@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     max_concurrent_embeddings: int = Field(default=1, ge=1, le=2)
     max_chunks_per_document: int = Field(default=400, ge=1, le=1000)
     max_search_results: int = Field(default=10, ge=1, le=20)
-    search_min_score: float = Field(default=0.70, ge=-1, le=1)
+    search_min_score: float = Field(default=0.81, ge=-1, le=1)
     max_context_characters: int = Field(default=12000, ge=1000, le=20000)
     ollama_timeout_seconds: float = Field(default=300, ge=1, le=300)
 

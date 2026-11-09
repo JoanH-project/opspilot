@@ -7,7 +7,7 @@ from app.chunking import MarkdownChunker
 from app.models import AnswerRequest, DocumentIndexRequest, Evidence, SearchRequest
 from app.service import AiServiceUnavailable, KnowledgeService
 from app.settings import Settings
-from tests.fakes import CharacterTokenizer, FakeEmbeddings, FakeVectorStore
+from tests.fakes import CharacterTokenizer, FakeEmbeddings, FakePoint, FakeVectorStore
 
 
 class FakeHttpResponse:
@@ -40,7 +40,7 @@ def service(http=None, *, chunks=10):
     settings = Settings(
         internal_token="test-only-internal-token-0123456789abcd",
         max_chunks_per_document=chunks,
-        search_min_score=0.7,
+        search_min_score=0.81,
     )
     embeddings = FakeEmbeddings()
     vectors = FakeVectorStore()
@@ -77,6 +77,33 @@ async def test_index_uses_real_chunk_records_and_search_scopes_to_workspace():
     assert vectors.filters == [18]
     assert response.results[0].document_id == 42
     assert response.results[0].revision == 3
+
+
+@pytest.mark.asyncio
+async def test_search_excludes_passages_below_calibrated_relevance_cutoff():
+    knowledge, _, vectors = service()
+    vectors.points = [
+        FakePoint(
+            {
+                "workspace_id": 18,
+                "document_id": document_id,
+                "revision": 1,
+                "title": "Runbook",
+                "chunk_id": f"chunk-{document_id}",
+                "chunk_index": 0,
+                "text": "Supported text",
+                "source_start": 0,
+                "source_end": 14,
+                "is_tombstone": False,
+            },
+            score=score,
+        )
+        for document_id, score in [(40, 0.8099), (41, 0.81)]
+    ]
+
+    response = await knowledge.search(SearchRequest(workspace_id=18, query="runbook"))
+
+    assert [result.document_id for result in response.results] == [41]
 
 
 @pytest.mark.asyncio

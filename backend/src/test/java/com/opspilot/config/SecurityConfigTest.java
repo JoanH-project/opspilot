@@ -23,6 +23,7 @@ class SecurityConfigTest {
                 configuration.checkHttpMethod(HttpMethod.PATCH));
         assertEquals(List.of("Authorization", "Content-Type"),
                 configuration.checkHeaders(List.of("Authorization", "Content-Type")));
+        assertEquals(List.of("X-Request-Id", "Retry-After"), configuration.getExposedHeaders());
         assertFalse(configuration.getAllowCredentials());
     }
 

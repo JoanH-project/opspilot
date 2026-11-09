@@ -1,6 +1,6 @@
 # V3 Retrieval Evaluation
 
-The repository includes a small synthetic bilingual corpus at `ai-service/evaluation/corpus.json`. It covers exact and paraphrased English queries, Chinese retrieval, a query needing two documents, a newer revision replacing an older one, an archived-only document, a no-answer query, and a cross-workspace-only query. All content is synthetic and contains no customer data.
+The repository includes a synthetic bilingual corpus at `ai-service/evaluation/corpus.json`. It covers exact and paraphrased English queries, Chinese retrieval, multi-document answers, revision replacement, archived-only and cross-workspace queries, and several unsupported topics. All content is synthetic and contains no user data. The current fixture has 13 document revisions and 23 labeled queries (15 positive and 8 negative).
 
 ## Metrics
 
@@ -12,7 +12,7 @@ The repository includes a small synthetic bilingual corpus at `ai-service/evalua
 - **Negative queries empty:** count of no-answer, cross-workspace-only, and archived-only queries that returned no result after the configured score threshold.
 - Per-query retrieved IDs and scores, latency, model revision, Qdrant version, and a SHA-256 of the loaded `.safetensors` weights when present.
 
-These are retrieval metrics on a tiny synthetic corpus, not a claim of production answer quality. Do not tune the threshold on this corpus alone. Keep the corpus labels fixed for comparisons and add separate test cases before changing ranking behavior.
+These metrics are a regression fixture, not a claim of production answer quality. On the current corpus, the lowest retrieved relevant score is 0.8265 and the highest retrieved score for a negative query is 0.794. The local cutoff is therefore set to 0.81; it leaves a 0.0165 margin below the lowest positive and returns no results for all eight negative queries. The observed run recorded in `docs/evaluation/v3-local-2026-11-09.json` has Recall@5 1.0, Hit@5 1.0, MRR@5 0.9333, and negative queries empty 8/8. Keep corpus labels fixed for comparisons and add a separate, larger held-out query set before making broader relevance claims or retuning the cutoff.
 
 ## Run against the isolated local Qdrant and real E5 model
 
@@ -27,7 +27,7 @@ docker compose -f docker-compose.v3.yml run --rm --no-deps \
   /opt/eval/scripts/evaluate_retrieval.py
 ```
 
-The first indexing run downloads the pinned E5 model into `opspilot_v3_ai_model_cache`; subsequent runs reuse it. The script reports actual metrics only after this command completes. Record the full JSON output, model revision/weight digest, Compose image versions, and date in the acceptance record when a real run is available.
+The first indexing run downloads the pinned E5 model into `opspilot_v3_ai_model_cache`; subsequent runs reuse it. The script reports actual metrics only after this command completes, including the configured `search_min_score`. Record the full JSON output, model revision/weight digest, Compose image versions, and date in the acceptance record after each real run.
 
 ## Automated tests
 

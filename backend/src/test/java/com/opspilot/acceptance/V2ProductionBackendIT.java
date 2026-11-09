@@ -23,6 +23,9 @@ import com.opspilot.auth.ratelimit.RedisAuthRateLimiter;
 import com.opspilot.auth.ratelimit.TooManyAuthenticationAttemptsException;
 import com.opspilot.document.DocumentRepository;
 import com.opspilot.document.DocumentService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opspilot.document.DocumentStatus;
 import com.opspilot.document.dto.CreateDocumentRequest;
 import com.opspilot.knowledge.DocumentIndexStateRepository;
@@ -70,6 +73,7 @@ import static org.awaitility.Awaitility.await;
 class V2ProductionBackendIT {
     private static final String METRICS_TEST_USERNAME = "v2-integration-metrics";
     private static final String METRICS_TEST_PASSWORD = "v2-integration-metrics-password";
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Container
     static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.4"))
@@ -359,8 +363,21 @@ class V2ProductionBackendIT {
         return headers;
     }
 
+    @Test
+    void longFieldReadsTheTopLevelIdWhenNestedObjectsAlsoHaveIds() {
+        assertThat(longField("{\"id\":8,\"creator\":{\"id\":2}}", "id")).isEqualTo(8);
+    }
+
     private static long longField(String json, String field) {
-        return Long.parseLong(json.replaceAll(".*\\\"" + field + "\\\":([0-9]+).*", "$1"));
+        try {
+            JsonNode value = JSON.readTree(json).get(field);
+            if (value == null || !value.canConvertToLong()) {
+                throw new IllegalArgumentException("Missing numeric JSON field: " + field);
+            }
+            return value.longValue();
+        } catch (JsonProcessingException exception) {
+            throw new IllegalArgumentException("Invalid JSON response", exception);
+        }
     }
 
     private LettuceConnectionFactory factory() {
