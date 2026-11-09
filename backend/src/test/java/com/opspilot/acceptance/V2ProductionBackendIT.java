@@ -364,13 +364,16 @@ class V2ProductionBackendIT {
     }
 
     @Test
-    void longFieldReadsTheTopLevelIdWhenNestedObjectsAlsoHaveIds() {
+    void longFieldReadsTheTopLevelIdFromObjectsAndArrayResponses() {
         assertThat(longField("{\"id\":8,\"creator\":{\"id\":2}}", "id")).isEqualTo(8);
+        assertThat(longField("[{\"id\":8,\"owner\":{\"id\":2}}]", "id")).isEqualTo(8);
     }
 
     private static long longField(String json, String field) {
         try {
-            JsonNode value = JSON.readTree(json).get(field);
+            JsonNode root = JSON.readTree(json);
+            JsonNode record = root.isArray() ? root.path(0) : root;
+            JsonNode value = record.get(field);
             if (value == null || !value.canConvertToLong()) {
                 throw new IllegalArgumentException("Missing numeric JSON field: " + field);
             }
