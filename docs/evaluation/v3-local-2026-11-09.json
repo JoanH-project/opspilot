@@ -1,0 +1,286 @@
+{
+  "embedding_model": "intfloat/multilingual-e5-small",
+  "embedding_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "embedding_weights_sha256": "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477",
+  "dimensions": 384,
+  "qdrant_version": "1.20.0",
+  "collection": "opspilot_eval_ba063aeb0408",
+  "top_k": 5,
+  "recall_at_5": 1.0,
+  "hit_at_5": 1.0,
+  "mrr_at_5": 1.0,
+  "negative_queries_empty": 0,
+  "negative_queries_total": 3,
+  "cases": [
+    {
+      "id": "en_incident_exact",
+      "workspace_id": 701,
+      "query": "What should I do when the API returns repeated server errors?",
+      "relevant_document_ids": [
+        101
+      ],
+      "retrieved_document_ids": [
+        101,
+        201,
+        102,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 101,
+          "score": 0.9066
+        },
+        {
+          "document_id": 201,
+          "score": 0.8326
+        },
+        {
+          "document_id": 102,
+          "score": 0.8037
+        },
+        {
+          "document_id": 103,
+          "score": 0.7844
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 124.9
+    },
+    {
+      "id": "en_incident_paraphrase",
+      "workspace_id": 701,
+      "query": "Where can I find the emergency responder rotation?",
+      "relevant_document_ids": [
+        101
+      ],
+      "retrieved_document_ids": [
+        101,
+        201,
+        102,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 101,
+          "score": 0.8401
+        },
+        {
+          "document_id": 201,
+          "score": 0.7874
+        },
+        {
+          "document_id": 102,
+          "score": 0.7871
+        },
+        {
+          "document_id": 103,
+          "score": 0.741
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 114.2
+    },
+    {
+      "id": "zh_database_health",
+      "workspace_id": 701,
+      "query": "数据库无法连接时应该先检查什么？",
+      "relevant_document_ids": [
+        103
+      ],
+      "retrieved_document_ids": [
+        103,
+        201,
+        101,
+        102
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 103,
+          "score": 0.9119
+        },
+        {
+          "document_id": 201,
+          "score": 0.8266
+        },
+        {
+          "document_id": 101,
+          "score": 0.8013
+        },
+        {
+          "document_id": 102,
+          "score": 0.7713
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 131.9
+    },
+    {
+      "id": "multi_release_and_incident",
+      "workspace_id": 701,
+      "query": "How should we prepare for a release and escalate a continuing outage?",
+      "relevant_document_ids": [
+        101,
+        102
+      ],
+      "retrieved_document_ids": [
+        102,
+        101,
+        201,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 102,
+          "score": 0.8424
+        },
+        {
+          "document_id": 101,
+          "score": 0.8284
+        },
+        {
+          "document_id": 201,
+          "score": 0.8237
+        },
+        {
+          "document_id": 103,
+          "score": 0.7731
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 335.4
+    },
+    {
+      "id": "updated_current_revision",
+      "workspace_id": 701,
+      "query": "What is the safe process after database failover?",
+      "relevant_document_ids": [
+        201
+      ],
+      "retrieved_document_ids": [
+        201,
+        101,
+        103,
+        102
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 201,
+          "score": 0.874
+        },
+        {
+          "document_id": 101,
+          "score": 0.7989
+        },
+        {
+          "document_id": 103,
+          "score": 0.7785
+        },
+        {
+          "document_id": 102,
+          "score": 0.7769
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 322.0
+    },
+    {
+      "id": "no_answer",
+      "workspace_id": 701,
+      "query": "What is the private office address of the CEO?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [
+        102,
+        201,
+        101
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 102,
+          "score": 0.7418
+        },
+        {
+          "document_id": 201,
+          "score": 0.7344
+        },
+        {
+          "document_id": 101,
+          "score": 0.7238
+        }
+      ],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 140.4
+    },
+    {
+      "id": "cross_workspace_only",
+      "workspace_id": 701,
+      "query": "What red team vault password does workspace 799 use?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [
+        102,
+        101,
+        201,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 102,
+          "score": 0.7529
+        },
+        {
+          "document_id": 101,
+          "score": 0.7479
+        },
+        {
+          "document_id": 201,
+          "score": 0.733
+        },
+        {
+          "document_id": 103,
+          "score": 0.7275
+        }
+      ],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 120.6
+    },
+    {
+      "id": "archived_only",
+      "workspace_id": 701,
+      "query": "What was the retired pager code?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [
+        101,
+        201,
+        102,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 101,
+          "score": 0.7622
+        },
+        {
+          "document_id": 201,
+          "score": 0.761
+        },
+        {
+          "document_id": 102,
+          "score": 0.738
+        },
+        {
+          "document_id": 103,
+          "score": 0.709
+        }
+      ],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 168.9
+    }
+  ]
+}

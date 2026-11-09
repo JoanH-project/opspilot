@@ -1,0 +1,101 @@
+{
+  "description": "Synthetic OpsPilot-like English and Chinese runbooks; contains no user data.",
+  "workspace_id": 701,
+  "documents": [
+    {
+      "document_id": 101,
+      "revision": 1,
+      "title": "Incident response",
+      "content": "# API incidents\n\nWhen the API returns repeated server errors, check /api/health and the service logs. If recovery takes more than five minutes, page the on-call engineer from the current rotation. Include the request ID and affected operation in the incident handoff."
+    },
+    {
+      "document_id": 102,
+      "revision": 1,
+      "title": "Release process",
+      "content": "# Scheduled releases\n\nThe standard release window is Tuesday at 10:00 UTC. Lin is the change owner. Verify the health endpoint before announcing completion and use the incident runbook if deployment errors continue."
+    },
+    {
+      "document_id": 103,
+      "revision": 1,
+      "title": "数据库故障处理",
+      "content": "# 数据库不可用\n\n数据库连接失败时，先检查数据库健康状态和连接池指标。确认备份可用后联系值班工程师，不要直接删除或重建生产数据。"
+    },
+    {
+      "document_id": 201,
+      "revision": 1,
+      "title": "Database recovery (old revision)",
+      "content": "# Old recovery procedure\n\nOld procedure: write directly to the primary database during a failover. This procedure is obsolete."
+    },
+    {
+      "document_id": 201,
+      "revision": 2,
+      "title": "Database recovery",
+      "content": "# Current recovery procedure\n\nAfter database failover, verify the replica is healthy, pause writes, and confirm the latest backup before restoring service. Never write directly to an unverified primary."
+    },
+    {
+      "document_id": 301,
+      "workspace_id": 799,
+      "revision": 1,
+      "title": "Other workspace private token note",
+      "content": "# Private access\n\nWorkspace 799 uses a red team vault password. This content must never appear in Workspace 701 retrieval."
+    },
+    {
+      "document_id": 401,
+      "revision": 1,
+      "title": "Retired paging runbook",
+      "content": "# Retired runbook\n\nThe legacy paging system used the obsolete pager code BLUE-17. This document is archived and must not appear in knowledge results."
+    }
+  ],
+  "archived_document_id": 401,
+  "archived_revision": 2,
+  "queries": [
+    {
+      "id": "en_incident_exact",
+      "workspace_id": 701,
+      "query": "What should I do when the API returns repeated server errors?",
+      "relevant_document_ids": [101]
+    },
+    {
+      "id": "en_incident_paraphrase",
+      "workspace_id": 701,
+      "query": "Where can I find the emergency responder rotation?",
+      "relevant_document_ids": [101]
+    },
+    {
+      "id": "zh_database_health",
+      "workspace_id": 701,
+      "query": "数据库无法连接时应该先检查什么？",
+      "relevant_document_ids": [103]
+    },
+    {
+      "id": "multi_release_and_incident",
+      "workspace_id": 701,
+      "query": "How should we prepare for a release and escalate a continuing outage?",
+      "relevant_document_ids": [101, 102]
+    },
+    {
+      "id": "updated_current_revision",
+      "workspace_id": 701,
+      "query": "What is the safe process after database failover?",
+      "relevant_document_ids": [201]
+    },
+    {
+      "id": "no_answer",
+      "workspace_id": 701,
+      "query": "What is the private office address of the CEO?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "cross_workspace_only",
+      "workspace_id": 701,
+      "query": "What red team vault password does workspace 799 use?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "archived_only",
+      "workspace_id": 701,
+      "query": "What was the retired pager code?",
+      "relevant_document_ids": []
+    }
+  ]
+}

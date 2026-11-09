@@ -6,6 +6,7 @@ import java.util.Objects;
 import com.opspilot.activity.ActivityLogService;
 import com.opspilot.activity.ActivityType;
 import com.opspilot.document.dto.*;
+import com.opspilot.knowledge.DocumentIndexStateService;
 import com.opspilot.user.*;
 import com.opspilot.workspace.*;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,16 @@ public class DocumentService {
     private final UserRepository users;
     private final WorkspaceAccessService access;
     private final ActivityLogService activityLogService;
+    private final DocumentIndexStateService indexStateService;
 
     public DocumentService(DocumentRepository documents, UserRepository users,
-                           WorkspaceAccessService access, ActivityLogService activityLogService) {
+                           WorkspaceAccessService access, ActivityLogService activityLogService,
+                           DocumentIndexStateService indexStateService) {
         this.documents = documents;
         this.users = users;
         this.access = access;
         this.activityLogService = activityLogService;
+        this.indexStateService = indexStateService;
     }
 
     @Transactional
@@ -32,6 +36,7 @@ public class DocumentService {
         User creator = users.findById(userId).orElseThrow(DocumentNotFoundException::new);
         Document saved = documents.saveAndFlush(
                 new Document(membership.getWorkspace(), request.title().trim(), request.content(), creator));
+        indexStateService.queue(saved);
         activityLogService.record(saved.getWorkspace(), creator, ActivityType.DOCUMENT_CREATED, "DOCUMENT",
                 saved.getId(), creator.getName() + " created document " + saved.getTitle());
         return DocumentResponse.from(saved);
@@ -70,6 +75,7 @@ public class DocumentService {
 
         document.update(title, request.content());
         Document saved = documents.saveAndFlush(document);
+        indexStateService.queue(saved);
         User actor = actorMembership.getUser();
         activityLogService.record(saved.getWorkspace(), actor, ActivityType.DOCUMENT_UPDATED, "DOCUMENT",
                 saved.getId(), actor.getName() + " updated document " + saved.getTitle());
@@ -86,6 +92,7 @@ public class DocumentService {
 
         document.archive();
         Document saved = documents.saveAndFlush(document);
+        indexStateService.queue(saved);
         User actor = actorMembership.getUser();
         activityLogService.record(saved.getWorkspace(), actor, ActivityType.DOCUMENT_ARCHIVED, "DOCUMENT",
                 saved.getId(), actor.getName() + " archived document " + saved.getTitle());

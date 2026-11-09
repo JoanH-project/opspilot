@@ -13,6 +13,10 @@ import com.opspilot.workspace.WorkspaceNotFoundException;
 import com.opspilot.project.*;
 import com.opspilot.task.*;
 import com.opspilot.document.*;
+import com.opspilot.knowledge.KnowledgeAiUnavailableException;
+import com.opspilot.knowledge.KnowledgeContentChangedException;
+import com.opspilot.knowledge.KnowledgeReindexRateLimitException;
+import com.opspilot.knowledge.KnowledgeReindexTooLargeException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.HttpStatus;
@@ -85,6 +89,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidActivityLimitException.class)
     ResponseEntity<ApiError> invalidActivityLimit(InvalidActivityLimitException exception) {
         return response(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(KnowledgeAiUnavailableException.class)
+    ResponseEntity<ApiError> handleKnowledgeUnavailable(KnowledgeAiUnavailableException exception) {
+        return response(HttpStatus.SERVICE_UNAVAILABLE,
+                "The local knowledge service is temporarily unavailable", Map.of());
+    }
+    @ExceptionHandler(KnowledgeContentChangedException.class)
+    ResponseEntity<ApiError> handleKnowledgeChanged(KnowledgeContentChangedException exception) {
+        return response(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+    @ExceptionHandler(KnowledgeReindexRateLimitException.class)
+    ResponseEntity<ApiError> handleKnowledgeReindexLimit(KnowledgeReindexRateLimitException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.getRetryAfterSeconds()))
+                .body(new ApiError(Instant.now(), HttpStatus.TOO_MANY_REQUESTS.value(),
+                        HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase(), exception.getMessage(), Map.of()));
+    }
+    @ExceptionHandler(KnowledgeReindexTooLargeException.class)
+    ResponseEntity<ApiError> handleKnowledgeReindexSize(KnowledgeReindexTooLargeException exception) {
+        return response(HttpStatus.PAYLOAD_TOO_LARGE, exception.getMessage(), Map.of());
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedError(Exception exception) {

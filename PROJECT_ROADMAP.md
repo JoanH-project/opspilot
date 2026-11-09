@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
-> **Updated:** 2026-11-08
-> **Current Milestone:** V2 Production Backend — in progress
-> **Overall Progress:** V1 backend Phases 1–8 and frontend F1–F4 are merged into `main`. V2 Production Backend is in progress on `feat/v2-production-backend`; local verification and blockers are recorded in `docs/V2_ACCEPTANCE.md`.
-> **Current Sprint:** V2 Production Backend implementation and verification
-> **Next Major Milestone:** V2 review and merge after required CI/integration evidence and owner review
+> **Updated:** 2026-11-09
+> **Current Milestone:** V3 Knowledge / RAG — in progress
+> **Overall Progress:** V1 and V2 are merged into `main`. V3 Knowledge/RAG implementation is underway on `feat/v3-knowledge-rag`; current code, verification, and acceptance gaps are in `docs/V3_ACCEPTANCE.md`.
+> **Current Sprint:** V3 local retrieval, workspace-grounded answers, evaluation, and acceptance
+> **Next Major Milestone:** Resolve retrieval negative-query quality with a larger evaluation set, complete V3 browser acceptance, and pass current-head CI before merge review
 
 ## 1. Project goal
 
@@ -34,7 +34,8 @@ The final goal is **not** a chat UI with an LLM attached. The AI layer must oper
 | 6 | Task / Status / Priority / Assignee / Due Date | ✅ Complete |
 | 7 | Workspace Documents / Knowledge Base foundation | ✅ Complete |
 | 8 | Activity Logs + Dashboard Aggregation | ✅ Complete |
-| V2 | Production configuration / Redis auth protection / observability / service reliability | 🚧 In progress; see `docs/V2_ACCEPTANCE.md` |
+| V2 | Production configuration / Redis auth protection / observability / service reliability | ✅ Complete and merged through PR #9; see `docs/V2_ACCEPTANCE.md` |
+| V3 | Local workspace knowledge retrieval and grounded answers | 🚧 In progress on `feat/v3-knowledge-rag`; see `docs/V3_ACCEPTANCE.md` |
 
 Phases 1–8 have been:
 - implemented,
@@ -46,7 +47,7 @@ Phases 1–8 have been:
 
 Phase 8 has been implemented, automatically tested, verified against real MySQL/Flyway V7, and exercised through JWT-authenticated HTTP flows. Verified behavior includes transactional activity recording, feed limits and ordering, dashboard aggregation, overdue-task rules, archive idempotency, tenant isolation, and persisted activity rows.
 
-The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1. V2 Production Backend work is now underway as a separate milestone; AI phases remain out of scope.
+The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1. V2 is merged; V3 local Knowledge/RAG is now underway as a separate milestone.
 
 The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or explicitly agreed contract changes. The shared frontend reference is `docs/API_CONTRACT.md`.
 
@@ -59,7 +60,7 @@ The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or ex
 - Previously reported isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome flows (81 API responses), including auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. Separately, human F1 acceptance reported backend-unavailable UX and login after service recovery as passing.
 - Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
 - Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) was merged into `main` on 2026-11-06 at merge commit `1c4e65d`. Frontend CI run [42184723079](https://github.com/JoanH-project/opspilot/actions/runs/42184723079) passed on its final head `3ce79d7` (install, 26 tests, lint, and build).
-- V1 is complete and frozen. V2 Production Backend is in progress on `feat/v2-production-backend`; see `docs/V2_ACCEPTANCE.md` for current evidence and gaps.
+- V1 is complete and frozen. V2 Production Backend is merged through PR #9. V3 Knowledge/RAG is in progress on `feat/v3-knowledge-rag`; see `docs/V3_ACCEPTANCE.md` for current evidence and acceptance gaps.
 
 ### V1 post-merge follow-ups
 
@@ -89,9 +90,11 @@ If the ActivityLog write fails, the business operation must roll back. Idempoten
 
 ## 3.2 V2 status
 
-Implementation is on branch `feat/v2-production-backend`, based on the merged PR #8 head. The branch is pushed, but PR creation was blocked by GitHub integration permission (403); the compare link and required next action are recorded in [docs/V2_ACCEPTANCE.md](docs/V2_ACCEPTANCE.md). Redis is scoped to login and registration frequency protection. No V1 API contract, RBAC rule, or V1–V7 migration was changed. The current code/test state, Docker boundary, audit result, and outstanding integration limitations are maintained in the acceptance record and the operational design in [docs/V2_PRODUCTION_BACKEND.md](docs/V2_PRODUCTION_BACKEND.md).
+V2 Production Backend was merged through PR #9 into `main` on 2026-11-09. Its verification record, including CI-backed Testcontainers and the separate local integration evidence, remains in [docs/V2_ACCEPTANCE.md](docs/V2_ACCEPTANCE.md). No V1 API contract, workspace authorization rule, or V1–V7 migration was changed. The `URGENT` task priority enum difference and remaining development-only npm advisories remain follow-up decisions, not changes introduced by V3.
 
-The `URGENT` priority enum difference remains an owner decision. V2 does not change it.
+## 3.3 V3 status
+
+V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source-of-truth and authorization boundary. The isolated live E5/Qdrant/Ollama/Spring HTTP flow has passed, along with unit tests and builds. The small real retrieval evaluation gets 1.0 positive Recall@5/Hit@5/MRR@5 but returns results for all three negative queries; local Testcontainers verification also cannot reach a valid Docker daemon. Browser acceptance and current-head CI remain pending. V3 is not complete; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) for evidence and remaining gates.
 
 ## 4. Current product architecture
 
@@ -109,27 +112,20 @@ Activity / Dashboard / Business Services
                   ▼
                 MySQL
 
----------------- Future AI Layer ----------------
+---------------- V3 Knowledge Layer (in progress) ----------------
 
-Document
+MySQL document + transactional index state
    ↓
-Chunking
+Spring index worker → private FastAPI service
    ↓
-Embedding
+Markdown chunks → multilingual E5 embeddings → tenant-filtered Qdrant
    ↓
-Vector Retrieval
+Spring verifies workspace + ACTIVE document + current revision
    ↓
-RAG
-   ↓
-Agent
- ├─ search_documents
- ├─ query_tasks
- ├─ create_task
- └─ update_task
-   ↓
-Evaluation / Observability
-   ↓
-MCP / Memory
+Local Ollama answer with verified citations
+
+---------------- Future V4+ ----------------
+Agent tools → Evaluation / Observability → MCP / Memory
 ```
 
 ## 5. Version roadmap
@@ -156,7 +152,7 @@ Goal: a complete demonstrable product.
 - Frontend/backend integration
 - Docker-based local demo
 
-**Current version: V1 complete and frozen; V2 Production Backend is in progress.**
+**Current version: V1 complete and frozen; V2 merged; V3 Knowledge/RAG is in progress.**
 
 ### V2 — Production Backend
 
@@ -173,18 +169,13 @@ No queue, async job, SSE, broad caching, Kubernetes, cloud service, or AI behavi
 
 ### V3 — Knowledge AI / RAG
 
+**Status: in progress.** See `docs/V3_ARCHITECTURE.md`, `docs/V3_API.md`, `docs/V3_EVALUATION.md`, and `docs/V3_ACCEPTANCE.md`.
+
 ```text
-Document → Chunk → Embedding → Vector Store → Retrieval → LLM
+Document → Transactional index outbox → Chunk → E5 embedding → Qdrant retrieval → verified evidence → local Ollama answer
 ```
 
-Focus:
-- Python AI service
-- Chunking
-- Embeddings
-- Vector database
-- Retrieval/reranking
-- Source grounding
-- RAG evaluation
+V3 keeps MySQL as source of truth and Spring as the authorization boundary. It adds a private Python service, tenant-filtered Qdrant, local answer generation, server-verified citations, a small synthetic retrieval corpus, and an isolated local Docker stack. Do not mark V3 complete until the full local model and HTTP acceptance is observed.
 
 ### V4 — Agent
 
@@ -441,7 +432,7 @@ Codex implementation prompts can remain private between Joan and the assignee. T
 
 ## 10. V1 completion record
 
-The previously merged Member A and Member B work was retained. The consolidated V1 completion was merged through PR #7 and documentation closeout PR #8 on 2026-11-07 (`c9c6ed3`). V2 implementation is tracked separately on `feat/v2-production-backend`.
+The previously merged Member A and Member B work was retained. The consolidated V1 completion was merged through PR #7 and documentation closeout PR #8 on 2026-11-07 (`c9c6ed3`). V2 was merged through PR #9; V3 is tracked on `feat/v3-knowledge-rag`.
 
 ### Completed checkpoints
 
@@ -505,7 +496,7 @@ F1 authentication and F2 workspace/dashboard implementation are merged. Preserve
 
 ### Milestone 3 — V1 full-stack completion
 
-Complete and merged to `main` through PR #7 on 2026-11-06. Final Frontend CI passed on the PR head. The remaining verification and contract/dependency decisions are listed under §3.1; they do not change V1's completed status. V2 has not started.
+Complete and merged to `main` through PR #7 on 2026-11-06. Final Frontend CI passed on the PR head. The remaining verification and contract/dependency decisions are listed under §3.1; they do not change V1's completed status. V2 and V3 are tracked as separate milestones.
 
 ### V1 Full-stack demo flow
 

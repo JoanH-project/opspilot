@@ -21,6 +21,7 @@ const navigationItems = [
   { label: 'Dashboard', to: 'dashboard' },
   { label: 'Projects', to: 'projects' },
   { label: 'Documents', to: 'documents' },
+  { label: 'Knowledge', to: 'knowledge' },
 ];
 
 export function AppShell({ children, currentWorkspace, workspaces }: AppShellProps): ReactElement {

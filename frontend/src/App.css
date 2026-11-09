@@ -1082,3 +1082,14 @@
     width: 100%;
   }
 }
+.knowledge-page { gap: 1.25rem; }
+.knowledge-status-counts { color: var(--muted, #64748b); font-size: 0.92rem; }
+.knowledge-notice { margin-bottom: 0; }
+.knowledge-ask, .knowledge-search { display: grid; gap: 1rem; }
+.knowledge-search-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.knowledge-answer { border-top: 1px solid var(--border, #e2e8f0); padding-top: 1rem; }
+.knowledge-answer-text { white-space: pre-wrap; line-height: 1.65; }
+.knowledge-source-list { display: grid; gap: 0.85rem; list-style: none; margin: 1rem 0 0; padding: 0; }
+.knowledge-source { border: 1px solid var(--border, #e2e8f0); border-radius: 0.85rem; padding: 1rem; }
+.knowledge-source p { color: var(--muted, #64748b); line-height: 1.55; white-space: pre-wrap; }
+.knowledge-source-heading { align-items: start; display: flex; gap: 1rem; justify-content: space-between; }
