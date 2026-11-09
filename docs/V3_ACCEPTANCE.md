@@ -5,7 +5,7 @@
 - **Base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (PR #9 merge on `origin/main`)
 - **Branch:** `feat/v3-knowledge-rag`
 - **PR:** [#10](https://github.com/JoanH-project/opspilot/pull/10), open to `main`, not merged
-- **Last observed CI head:** `1ef8ed5`; Frontend CI and AI Service CI passed. Backend CI showed that the first structural-parser fix did not handle the array returned by `GET /api/workspaces`. The helper now handles object and array responses and has regression assertions; CI for the next follow-up commit must be checked after push.
+- **Latest fully verified code head:** `01bc9f6`; all three workflows passed. Backend CI ran the MySQL/Redis Testcontainers integration and built the Java 21 image. The acceptance-test helper now handles both object and array responses, with regression assertions for nested IDs.
 
 This record separates local and browser observations from CI results. V3 remains in progress. Do not merge or start V4 until the remaining checks and review gates are resolved.
 
@@ -17,7 +17,7 @@ This record separates local and browser observations from CI results. V3 remains
 | Frontend lint, tests, and build | **PASS** | The unchanged frontend passed lint, 32 tests in 5 files, and Vite production build. No frontend source was changed during this follow-up. |
 | Backend unit tests and package | **PASS** | `mvn clean package`: 55 tests, no failures/errors/skips; Java compiler release target 21. Docker rebuilt the isolated backend image successfully from its Java 21 build image. |
 | Backend Testcontainers integration | **BLOCKED LOCALLY** | `mvn clean verify` passes unit tests but Testcontainers cannot validate this Docker Desktop daemon: the selected Docker socket returns HTTP 400 with empty daemon metadata. `docker compose` itself works. The explicit `DOCKER_HOST` retry produced the same local Testcontainers failure. |
-| Previous PR #10 CI heads | **MIXED** | At `e4e4842`, Frontend and AI Service CI passed; Backend CI failed because the regex helper selected a nested ID. At `1ef8ed5`, [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42601904711) and [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42601904860) passed; [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42601904787) failed because the structural helper did not accept the workspace-list array. The current follow-up handles both JSON shapes; check CI again on the new PR head. |
+| PR #10 code CI | **PASS** | At head `01bc9f6`, [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602327888), [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42602327877), and [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602327932) all passed. Backend CI includes Testcontainers integration and Java 21 image/runtime verification. Earlier failed heads were corrected by making the acceptance-test helper read top-level IDs from object and array responses. |
 | Isolated V3 stack and migrations | **PASS** | Isolated MySQL 8.4, Redis, Qdrant, Ollama, AI service, and Spring backend ran together. Flyway V1–V8 and Hibernate validation passed; `GET /api/health` returned `200 {"status":"UP"}`. The pre-existing MySQL container and volume were not used. |
 | Browser registration and workspace flow | **PASS** | Automated browser session registered/logged in, created a workspace and document, indexed it, and used workspace-scoped search. This is agent-controlled browser evidence, not human acceptance. |
 | Grounded Ask and safety | **PASS, with latency caveat** | Ask returned the current runbook answer and citation while ignoring an instruction embedded in the document. An unsupported private-address question returned `NOT ENOUGH EVIDENCE` without sources. Under concurrent model/evaluation load one Ask returned a sanitized 503; retry after the stack was idle succeeded in 32.1 seconds. |
@@ -31,10 +31,11 @@ This record separates local and browser observations from CI results. V3 remains
 
 ## Remaining acceptance gates
 
-- [ ] Push the scoped follow-up to `feat/v3-knowledge-rag` and confirm Backend, AI Service, and Frontend CI on the latest PR #10 head.
+- [x] Push the scoped follow-up and confirm all three workflows pass on PR #10 head `01bc9f6`, including backend Testcontainers and Java 21 image verification.
 - [ ] Run live HTTP checks for MEMBER `403`, the over-500-document `413`, and retry exhaustion to `FAILED`; existing service tests cover these rules but are not a substitute for live integration evidence.
-- [ ] Resolve or explicitly accept the local Docker Desktop/Testcontainers incompatibility. Do not misreport the local `mvn clean verify` result as passing; use current-head CI as the integration result once it passes.
 - [ ] Keep PR #10 open for human review. Do not merge it or start V4 as part of this acceptance task.
+
+Local `mvn clean verify` remains blocked by this Docker Desktop/Testcontainers socket metadata issue, while the same Testcontainers integration passes in current-head CI. Treat CI as the integration result; do not report the local verify command as passing.
 
 ## Scope and data boundary
 

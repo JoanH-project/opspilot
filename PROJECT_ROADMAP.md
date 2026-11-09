@@ -4,7 +4,7 @@
 > **Current Milestone:** V3 Knowledge / RAG — in progress
 > **Overall Progress:** V1 and V2 are merged into `main`. V3 Knowledge/RAG implementation is underway on `feat/v3-knowledge-rag`; current code, verification, and acceptance gaps are in `docs/V3_ACCEPTANCE.md`.
 > **Current Sprint:** V3 local retrieval, workspace-grounded answers, evaluation, and acceptance
-> **Next Major Milestone:** Pass current-head CI on PR #10, close the remaining live V3 authorization/retry checks, and complete review before merge; do not start V4
+> **Next Major Milestone:** Close the remaining live V3 authorization/retry checks and complete PR #10 review before merge; do not start V4
 
 ## 1. Project goal
 
@@ -94,7 +94,7 @@ V2 Production Backend was merged through PR #9 into `main` on 2026-11-09. Its ve
 
 ## 3.3 V3 status
 
-V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`, and PR #10 is open but not merged. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. The isolated E5/Qdrant/Ollama/Spring flow, automated browser flows, and an expanded 13-revision/23-query synthetic retrieval fixture pass locally; the fixture records positive Recall@5/Hit@5 of 1.0, MRR@5 of 0.9333, and all 8 negative queries empty at cutoff 0.81. Reindex CORS now exposes Retry-After. The last PR head (`1ef8ed5`) had passing Frontend/AI CI and a Backend failure because the first test-only parser correction did not handle the workspace-list array; a second fix now handles object and array responses. CI for that follow-up, live MEMBER/413/retry-exhaustion checks, and local Testcontainers remain unresolved. V3 is not complete; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) for evidence and remaining gates.
+V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`, and PR #10 is open but not merged. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. The isolated E5/Qdrant/Ollama/Spring flow, automated browser flows, and an expanded 13-revision/23-query synthetic retrieval fixture pass locally; the fixture records positive Recall@5/Hit@5 of 1.0, MRR@5 of 0.9333, and all 8 negative queries empty at cutoff 0.81. Reindex CORS now exposes Retry-After. At code head `01bc9f6`, Backend, AI Service, and Frontend CI passed; Backend CI includes the Testcontainers integration and Java 21 image/runtime check. Two earlier Backend CI failures exposed unsupported nested-ID and workspace-list-array parsing in its acceptance-test helper; the helper now handles both response shapes. Local Docker Desktop still prevents `mvn clean verify` through Testcontainers, although CI passes. Live MEMBER/413/retry-exhaustion checks and human review remain outstanding. V3 is not complete; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) for evidence and remaining gates.
 
 ## 4. Current product architecture
 
