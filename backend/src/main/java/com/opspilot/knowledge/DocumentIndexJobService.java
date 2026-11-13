@@ -2,6 +2,7 @@ package com.opspilot.knowledge;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.Optional;
 
 import com.opspilot.document.Document;
@@ -42,10 +43,17 @@ public class DocumentIndexJobService {
                         state.queue(revision, now);
                         return Optional.empty();
                     }
-                    state.claim(now, now.plusSeconds(LEASE_SECONDS));
+                    if (state.getAttempts() >= MAX_ATTEMPTS) {
+                        // Recover a worker that died during its final leased attempt without issuing attempt nine.
+                        state.failed("INDEXING_FAILED", null, now);
+                        return Optional.empty();
+                    }
+                    String claimToken = UUID.randomUUID().toString();
+                    state.claim(now, now.plusSeconds(LEASE_SECONDS), claimToken);
                     return Optional.of(new IndexJob(
                             document.getId(), document.getWorkspace().getId(), revision,
-                            document.getStatus(), document.getTitle(), document.getContent(), state.getAttempts()));
+                            document.getStatus(), document.getTitle(), document.getContent(),
+                            claimToken, state.getAttempts()));
                 });
     }
 
@@ -61,7 +69,11 @@ public class DocumentIndexJobService {
 
     private void updateAfterJob(IndexJob job, String failureSummary) {
         Instant now = clock.instant();
-        states.findById(job.documentId()).ifPresent(state -> {
+        states.findByIdForUpdate(job.documentId()).ifPresent(state -> {
+            if (state.getStatus() != DocumentIndexStatus.INDEXING
+                    || !job.claimToken().equals(state.getClaimToken())) {
+                return;
+            }
             Optional<Document> found = documents.findById(job.documentId());
             if (found.isEmpty()) {
                 states.delete(state);

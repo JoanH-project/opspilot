@@ -2,6 +2,7 @@ package com.opspilot.knowledge;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,10 @@ public interface DocumentIndexStateRepository extends JpaRepository<DocumentInde
     List<DocumentIndexState> findByWorkspaceIdAndStatus(Long workspaceId, DocumentIndexStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select state from DocumentIndexState state where state.documentId = :documentId")
+    Optional<DocumentIndexState> findByIdForUpdate(@Param("documentId") Long documentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
     @Query("""
             select state from DocumentIndexState state
@@ -27,8 +32,7 @@ public interface DocumentIndexStateRepository extends JpaRepository<DocumentInde
                    and state.attempts < :maxAttempts
                    and (state.nextAttemptAt is null or state.nextAttemptAt <= :now))
                or (state.status = com.opspilot.knowledge.DocumentIndexStatus.INDEXING
-                   and state.leaseUntil < :now
-                   and state.attempts < :maxAttempts)
+                   and state.leaseUntil < :now)
             order by state.updatedAt asc
             """)
     List<DocumentIndexState> lockNextClaimable(

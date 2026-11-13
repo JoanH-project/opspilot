@@ -21,7 +21,7 @@ public class DocumentIndexStateService {
     public void queue(Document document) {
         Instant now = clock.instant();
         long revision = document.getRevision() == null ? 0L : document.getRevision();
-        DocumentIndexState state = states.findById(document.getId())
+        DocumentIndexState state = states.findByIdForUpdate(document.getId())
                 .orElseGet(() -> new DocumentIndexState(
                         document.getId(), document.getWorkspace().getId(), revision, now));
         state.queue(revision, now);

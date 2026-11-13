@@ -35,6 +35,9 @@ public class DocumentIndexState {
     @Column(name = "lease_until")
     private Instant leaseUntil;
 
+    @Column(name = "claim_token", length = 36)
+    private String claimToken;
+
     @Column(name = "last_error_summary", length = 80)
     private String lastErrorSummary;
 
@@ -57,14 +60,16 @@ public class DocumentIndexState {
         attempts = 0;
         nextAttemptAt = null;
         leaseUntil = null;
+        claimToken = null;
         lastErrorSummary = null;
         updatedAt = now;
     }
 
-    public void claim(Instant now, Instant leaseEnd) {
+    public void claim(Instant now, Instant leaseEnd, String claimToken) {
         status = DocumentIndexStatus.INDEXING;
         attempts++;
         leaseUntil = leaseEnd;
+        this.claimToken = claimToken;
         nextAttemptAt = null;
         updatedAt = now;
     }
@@ -72,6 +77,7 @@ public class DocumentIndexState {
     public void ready(Instant now) {
         status = DocumentIndexStatus.READY;
         leaseUntil = null;
+        claimToken = null;
         nextAttemptAt = null;
         lastErrorSummary = null;
         updatedAt = now;
@@ -80,6 +86,7 @@ public class DocumentIndexState {
     public void failed(String summary, Instant nextAttemptAt, Instant now) {
         status = DocumentIndexStatus.FAILED;
         leaseUntil = null;
+        claimToken = null;
         this.nextAttemptAt = nextAttemptAt;
         lastErrorSummary = summary;
         updatedAt = now;
@@ -92,6 +99,7 @@ public class DocumentIndexState {
     public int getAttempts() { return attempts; }
     public Instant getNextAttemptAt() { return nextAttemptAt; }
     public Instant getLeaseUntil() { return leaseUntil; }
+    public String getClaimToken() { return claimToken; }
     public String getLastErrorSummary() { return lastErrorSummary; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

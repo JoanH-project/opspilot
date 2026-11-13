@@ -140,7 +140,7 @@ class V3KnowledgeHttpBoundaryIT {
         AI_FAILURES_ENABLED.set(false);
         ALL_AI_REQUESTS_AUTHENTICATED.set(true);
         AI_INDEX_REQUESTS.set(0);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
     }
 
     @AfterAll

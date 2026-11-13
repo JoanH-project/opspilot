@@ -9,4 +9,5 @@ public record IndexJob(
         DocumentStatus documentStatus,
         String title,
         String content,
+        String claimToken,
         int attempts) { }
