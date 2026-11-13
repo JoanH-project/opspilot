@@ -45,6 +45,15 @@ jobs:
       - name: Verify backend (unit + Testcontainers integration)
         run: mvn clean verify
 
+      - name: Upload V3 HTTP boundary JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-http-boundary-junit-${{ github.run_id }}
+          path: backend/target/failsafe-reports/TEST-com.opspilot.acceptance.V3KnowledgeHttpBoundaryIT.xml
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Build Java 21 backend image
         working-directory: .
         run: docker build -f backend/Dockerfile -t opspilot-backend-ci:${{ github.sha }} backend
