@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
-> **Updated:** 2026-11-09
+> **Updated:** 2026-11-13
 > **Current Milestone:** V3 Knowledge / RAG — in progress
-> **Overall Progress:** V1 and V2 are merged into `main`. V3 Knowledge/RAG implementation is underway on `feat/v3-knowledge-rag`; current code, verification, and acceptance gaps are in `docs/V3_ACCEPTANCE.md`.
-> **Current Sprint:** V3 local retrieval, workspace-grounded answers, evaluation, and acceptance
-> **Next Major Milestone:** Close the remaining live V3 authorization/retry checks and complete PR #10 review before merge; do not start V4
+> **Overall Progress:** V1 and V2 are merged into `main`. V3 Knowledge/RAG implementation is on `feat/v3-knowledge-rag`; implementation SHA `dad1787511a54758b86f80d08054176ba930c0a4` has all three CI workflows passing. Three live HTTP boundary checks remain unverified because Docker Desktop's daemon was unavailable during final acceptance; see `docs/V3_ACCEPTANCE.md`.
+> **Current Sprint:** V3 final acceptance evidence for authorization, document limit, and retry exhaustion
+> **Next Major Milestone:** Complete the three live V3 HTTP boundary checks and PR #10 human review; do not start V4
 
 ## 1. Project goal
 
@@ -94,7 +94,7 @@ V2 Production Backend was merged through PR #9 into `main` on 2026-11-09. Its ve
 
 ## 3.3 V3 status
 
-V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`, and PR #10 is open but not merged. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. The isolated E5/Qdrant/Ollama/Spring flow, automated browser flows, and an expanded 13-revision/23-query synthetic retrieval fixture pass locally; the fixture records positive Recall@5/Hit@5 of 1.0, MRR@5 of 0.9333, and all 8 negative queries empty at cutoff 0.81. Reindex CORS now exposes Retry-After. At code head `01bc9f6`, Backend, AI Service, and Frontend CI passed; Backend CI includes the Testcontainers integration and Java 21 image/runtime check. Two earlier Backend CI failures exposed unsupported nested-ID and workspace-list-array parsing in its acceptance-test helper; the helper now handles both response shapes. Local Docker Desktop still prevents `mvn clean verify` through Testcontainers, although CI passes. Live MEMBER/413/retry-exhaustion checks and human review remain outstanding. V3 is not complete; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) for evidence and remaining gates.
+V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`, and PR #10 is open but not merged. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. The prior isolated E5/Qdrant/Ollama/Spring flow, browser flows, and 13-revision/23-query **synthetic regression fixture** pass; this small fixture is not evidence of production retrieval quality. It records Recall@5/Hit@5 1.0, MRR@5 0.9333, and 8/8 negative queries empty at cutoff 0.81. Reindex CORS exposes Retry-After. On exact PR head `dad1787511a54758b86f80d08054176ba930c0a4`, [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909666), [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909619), and [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909697) passed; Backend CI includes Testcontainers and Java 21 checks. This final acceptance attempt could not reach the isolated services because Docker Desktop's daemon socket did not answer bounded probes; therefore real HTTP MEMBER `403`, over-limit `413`, and retry exhaustion to persisted `FAILED` remain unverified. The prior local `mvn clean verify` Testcontainers issue also remains; CI is not being represented as a substitute for those three HTTP checks. V3 remains `PARTIAL`, not ready for review; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) and [docs/evaluation/v3-http-boundary-2026-11-13.md](docs/evaluation/v3-http-boundary-2026-11-13.md). Preserve the frozen V1 API, V1–V7 migrations, V8 design boundary, and local E5/Ollama zero-paid-API design.
 
 ## 4. Current product architecture
 
