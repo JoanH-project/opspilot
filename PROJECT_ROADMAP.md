@@ -1,10 +1,10 @@
 # OpsPilot — Project Roadmap & Team Guide
 
 > **Updated:** 2026-11-13
-> **Current Milestone:** V3 Knowledge / RAG — in progress
-> **Overall Progress:** V1 and V2 are merged into `main`. V3 Knowledge/RAG implementation is on `feat/v3-knowledge-rag`; code SHA `dad1787511a54758b86f80d08054176ba930c0a4` passed all three workflows, and the Ubuntu 24.04 Backend runner fix passed all three workflows on `edb283477353a0520b32e2ca57a922fa2dae10bd`. Three live HTTP boundary checks remain unverified because Docker Desktop's daemon was unavailable locally; see `docs/V3_ACCEPTANCE.md`.
-> **Current Sprint:** V3 final acceptance evidence for authorization, document limit, and retry exhaustion
-> **Next Major Milestone:** Complete the three live V3 HTTP boundary checks and PR #10 human review; do not start V4
+> **Current Milestone:** V3 Knowledge / RAG — ready for human review
+> **Overall Progress:** V1 and V2 are merged into `main`. V3 acceptance tests passed on code SHA `b8adb8903724f918ecb518da8114fe38a0c4a2b2`; all three required workflows passed on that SHA. PR #10 is open and unmerged; see `docs/V3_ACCEPTANCE.md`.
+> **Current Sprint:** PR #10 human code review
+> **Next Major Milestone:** Complete V3 human review; do not start V4 before that handoff is resolved
 
 ## 1. Project goal
 
@@ -47,7 +47,7 @@ Phases 1–8 have been:
 
 Phase 8 has been implemented, automatically tested, verified against real MySQL/Flyway V7, and exercised through JWT-authenticated HTTP flows. Verified behavior includes transactional activity recording, feed limits and ordering, dashboard aggregation, overdue-task rules, archive idempotency, tenant isolation, and persisted activity rows.
 
-The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1. V2 is merged; V3 local Knowledge/RAG is now underway as a separate milestone.
+The V1 backend feature implementation is complete and merged. Its API contract is frozen for V1. V2 is merged; V3 Knowledge/RAG is ready for human review as a separate milestone.
 
 The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or explicitly agreed contract changes. The shared frontend reference is `docs/API_CONTRACT.md`.
 
@@ -60,7 +60,7 @@ The Phase 1–8 backend API contract is frozen for V1 except for bug fixes or ex
 - Previously reported isolated MySQL 8.4 and Spring Boot integration passed Flyway V1–V7, health, 28 authenticated HTTP checks, and headless Chrome flows (81 API responses), including auth restoration, tenant isolation, workspace switching, project/task/document writes, Dashboard activity, CORS, and a simulated project-list network failure with Retry. Separately, human F1 acceptance reported backend-unavailable UX and login after service recovery as passing.
 - Temporary services and data were removed after verification; the pre-existing `opspilot-mysql` container and `opspilot_mysql_data` volume remained healthy and untouched.
 - Consolidated [PR #7](https://github.com/JoanH-project/opspilot/pull/7) was merged into `main` on 2026-11-06 at merge commit `1c4e65d`. Frontend CI run [42184723079](https://github.com/JoanH-project/opspilot/actions/runs/42184723079) passed on its final head `3ce79d7` (install, 26 tests, lint, and build).
-- V1 is complete and frozen. V2 Production Backend is merged through PR #9. V3 Knowledge/RAG is in progress on `feat/v3-knowledge-rag`; see `docs/V3_ACCEPTANCE.md` for current evidence and acceptance gaps.
+- V1 is complete and frozen. V2 Production Backend is merged through PR #9. V3 Knowledge/RAG is ready for human review on `feat/v3-knowledge-rag`; PR #10 remains open. See `docs/V3_ACCEPTANCE.md` for evidence and limits.
 
 ### V1 post-merge follow-ups
 
@@ -94,7 +94,7 @@ V2 Production Backend was merged through PR #9 into `main` on 2026-11-09. Its ve
 
 ## 3.3 V3 status
 
-V3 implementation is on `feat/v3-knowledge-rag`, based on the merged V2 `main`, and PR #10 is open but not merged. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. The prior isolated E5/Qdrant/Ollama/Spring flow, browser flows, and 13-revision/23-query **synthetic regression fixture** pass; this small fixture is not evidence of production retrieval quality. It records Recall@5/Hit@5 1.0, MRR@5 0.9333, and 8/8 negative queries empty at cutoff 0.81. Reindex CORS exposes Retry-After. On implementation SHA `dad1787511a54758b86f80d08054176ba930c0a4`, [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909666), [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909619), and [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909697) passed. A documentation-only head exposed an Ubuntu runner/Docker API mismatch; after pinning Backend CI to Ubuntu 24.04, [Backend](https://github.com/JoanH-project/opspilot/actions/runs/43374514912), [AI Service](https://github.com/JoanH-project/opspilot/actions/runs/43374514982), and [Frontend](https://github.com/JoanH-project/opspilot/actions/runs/43374514833) all passed on exact SHA `edb283477353a0520b32e2ca57a922fa2dae10bd`. This final acceptance attempt could not reach the isolated services because Docker Desktop's daemon socket did not answer bounded probes; real HTTP MEMBER `403`, over-limit `413`, and retry exhaustion to persisted `FAILED` remain unverified. V3 remains `PARTIAL`, not ready for review; see [docs/V3_ACCEPTANCE.md](docs/V3_ACCEPTANCE.md) and [docs/evaluation/v3-http-boundary-2026-11-13.md](docs/evaluation/v3-http-boundary-2026-11-13.md). Preserve the frozen V1 API, V1–V7 migrations, V8 design boundary, and local E5/Ollama zero-paid-API design.
+V3 is on `feat/v3-knowledge-rag`, based on merged V2 `main`; PR #10 is **open and unmerged**. It adds V8 only, a private local Python retrieval service, Qdrant, local Ollama answer generation, and an authenticated Knowledge page. MySQL and Spring remain the source of truth and authorization boundary. Real HTTP acceptance passed on `b8adb8903724f918ecb518da8114fe38a0c4a2b2`: [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/43378130105), [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/43378130078), and [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/43378129996) all passed. The Backend run used Ubuntu 24.04/Java 21, MySQL 8.4 and Redis Testcontainers, Flyway V1–V8, random-port Spring Boot, HTTP JWT registration/login, and the actual Worker. Its only test substitute was a localhost AI HTTP stub. The `403`, repeated `413`, task state, cooldown, eight failed attempts, terminal `FAILED` with null retry/lease, no ninth attempt, and post-recovery `READY` assertions are recorded in [the acceptance record](docs/V3_ACCEPTANCE.md) and [the dated evidence](docs/evaluation/v3-http-boundary-2026-11-13.md); JUnit artifact is attached to Backend run 43378130105. Docker Desktop remains unresponsive locally; this was not reported as a local Testcontainers pass and no existing local MySQL volume was touched. The 13-revision/23-query synthetic retrieval fixture (Recall@5/Hit@5 1.0, MRR@5 0.9333, 8/8 negative queries empty) remains regression evidence only, not production-quality assurance. Preserve the frozen V1 API, V1–V7 migrations, V8 design boundary, and local E5/Ollama zero-paid-API approach. V3 is `V3_READY_FOR_HUMAN_REVIEW`; do not merge or start V4 in this handoff.
 
 ## 4. Current product architecture
 
@@ -112,7 +112,7 @@ Activity / Dashboard / Business Services
                   ▼
                 MySQL
 
----------------- V3 Knowledge Layer (in progress) ----------------
+---------------- V3 Knowledge Layer (ready for human review) ----------------
 
 MySQL document + transactional index state
    ↓
@@ -152,7 +152,7 @@ Goal: a complete demonstrable product.
 - Frontend/backend integration
 - Docker-based local demo
 
-**Current version: V1 complete and frozen; V2 merged; V3 Knowledge/RAG is in progress.**
+**Current version: V1 complete and frozen; V2 merged; V3 Knowledge/RAG is ready for human review.**
 
 ### V2 — Production Backend
 
@@ -169,13 +169,13 @@ No queue, async job, SSE, broad caching, Kubernetes, cloud service, or AI behavi
 
 ### V3 — Knowledge AI / RAG
 
-**Status: in progress.** See `docs/V3_ARCHITECTURE.md`, `docs/V3_API.md`, `docs/V3_EVALUATION.md`, and `docs/V3_ACCEPTANCE.md`.
+**Status: ready for human review on PR #10.** See `docs/V3_ARCHITECTURE.md`, `docs/V3_API.md`, `docs/V3_EVALUATION.md`, and `docs/V3_ACCEPTANCE.md`.
 
 ```text
 Document → Transactional index outbox → Chunk → E5 embedding → Qdrant retrieval → verified evidence → local Ollama answer
 ```
 
-V3 keeps MySQL as source of truth and Spring as the authorization boundary. It adds a private Python service, tenant-filtered Qdrant, local answer generation, server-verified citations, a small synthetic retrieval corpus, and an isolated local Docker stack. Do not mark V3 complete until the full local model and HTTP acceptance is observed.
+V3 keeps MySQL as source of truth and Spring as the authorization boundary. It adds a private Python service, tenant-filtered Qdrant, local answer generation, server-verified citations, a small synthetic retrieval corpus, and an isolated local Docker stack. The HTTP boundary acceptance passed in isolated GitHub Actions with real Spring Boot, MySQL, Redis, JWT, and Worker behavior; only the AI HTTP dependency was replaced by a test-local controlled service. The synthetic retrieval fixture is regression evidence, not a production-quality claim. Keep PR #10 open for human review and do not start V4 as part of that review handoff.
 
 ### V4 — Agent
 

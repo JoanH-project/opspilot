@@ -1,47 +1,42 @@
 # V3 Knowledge / RAG — Acceptance Record
 
 - **Updated:** 2026-11-13 (Australia/Sydney)
-- **Status:** `PARTIAL — latest code/CI configuration CI passes; three requested live HTTP boundary checks remain blocked`
-- **Base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (PR #9 merge on `origin/main`)
+- **Status:** `V3_READY_FOR_HUMAN_REVIEW`
 - **Branch:** `feat/v3-knowledge-rag`
-- **PR:** [#10](https://github.com/JoanH-project/opspilot/pull/10), open to `main`, not merged
-- **Latest verified V3 implementation SHA:** `dad1787511a54758b86f80d08054176ba930c0a4` (`dad1787`). Backend, AI Service, and Frontend CI all passed on this exact implementation SHA. Backend CI ran the MySQL/Redis Testcontainers integration and built the Java 21 image. The later acceptance-only commit `1443fd6` did not change application code, but its Backend CI initially failed because the `ubuntu-latest` image had moved to a Docker daemon requiring API 1.40 while Testcontainers requested API 1.32. Pinning Backend CI to `ubuntu-24.04` resolved that mismatch and passed on `edb2834` (see CI links below).
-- **Latest verified code/CI configuration SHA:** `edb283477353a0520b32e2ca57a922fa2dae10bd` (`edb2834`). Backend, AI Service, and Frontend CI all passed on this SHA. Backend CI's Testcontainers integration and Java 21 image build/runtime steps passed after pinning the job to Ubuntu 24.04. This SHA adds only the CI runner pin and acceptance documentation; V3 application code remains unchanged.
+- **PR:** [#10](https://github.com/JoanH-project/opspilot/pull/10), OPEN, not merged
+- **V3 HTTP acceptance code SHA:** `b8adb8903724f918ecb518da8114fe38a0c4a2b2`
+- **PR base:** `f1e38a0b339f763368a63d2c6a5a297f0f8f11ee` (`main`)
 
-This record separates local and browser observations from CI results. V3 remains in progress. Do not merge or start V4 until the remaining checks and review gates are resolved.
+All three requested HTTP boundaries and all required CI workflows passed for the SHA above. The Backend PR workflow ran on GitHub's Ubuntu 24.04 runner with Java 21 and the PR merge ref containing that head. Backend ran Spring Boot on a random HTTP port with real JWT, MySQL 8.4 Testcontainers, Redis 7.4 Testcontainers, Flyway V1–V8, JPA/Hibernate, workspace authorization, limiter, and the scheduled index Worker. The **only test substitute** was a localhost-bound HTTP server for the private AI dependency; it checks the internal service token and can return controlled 503 or success responses. No production retry setting or maximum attempt count was changed.
 
-## Verification observed locally
+## Three real HTTP boundary results
 
-| Area | Result | Evidence |
-|---|---|---|
-| AI service lock, lint, and tests | **PASS** | `uv lock --check`; Ruff passed; 18 pytest tests passed. Embedded Qdrant warns that payload indexes are inactive in local mode; the server-Qdrant test remains covered by CI. |
-| Frontend lint, tests, and build | **PASS** | The unchanged frontend passed lint, 32 tests in 5 files, and Vite production build. No frontend source was changed during this follow-up. |
-| Backend unit tests and package | **PASS** | `mvn clean package`: 55 tests, no failures/errors/skips; Java compiler release target 21. Docker rebuilt the isolated backend image successfully from its Java 21 build image. |
-| Backend Testcontainers integration | **PASS IN CI; BLOCKED LOCALLY** | On prior local verification, `mvn clean verify` passed unit tests but Testcontainers could not validate this Docker Desktop daemon: the selected socket returned HTTP 400 with empty daemon metadata. GitHub Backend CI passed the Testcontainers integration on current head. In this acceptance attempt, the Docker daemon did not answer bounded CLI probes, so no local Maven verification was rerun. |
-| PR #10 code CI | **PASS on latest verified implementation SHA** | At `dad1787511a54758b86f80d08054176ba930c0a4`, [Backend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909666), [AI Service CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909619), and [Frontend CI](https://github.com/JoanH-project/opspilot/actions/runs/42602909697) all passed. Backend CI includes Testcontainers integration and Java 21 image/runtime verification. Earlier failed heads were corrected by making the acceptance-test helper read top-level IDs from object and array responses. |
-| CI runner compatibility follow-up | **PASS on `edb2834`** | The docs-only head `1443fd6` exposed an Ubuntu runner/Docker API mismatch: [Backend CI run 43374135597](https://github.com/JoanH-project/opspilot/actions/runs/43374135597) failed with daemon minimum API 1.40 versus Testcontainers API 1.32; its [AI Service](https://github.com/JoanH-project/opspilot/actions/runs/43374135506) and [Frontend](https://github.com/JoanH-project/opspilot/actions/runs/43374135550) runs passed. Backend CI now pins Ubuntu 24.04. On exact SHA `edb283477353a0520b32e2ca57a922fa2dae10bd`, [Backend CI run 43374514912](https://github.com/JoanH-project/opspilot/actions/runs/43374514912), [AI Service CI run 43374514982](https://github.com/JoanH-project/opspilot/actions/runs/43374514982), and [Frontend CI run 43374514833](https://github.com/JoanH-project/opspilot/actions/runs/43374514833) all passed. Backend job steps include Testcontainers integration, Java 21 image build, and runtime confirmation. |
-| Isolated V3 stack and migrations | **PASS in prior run; unavailable in this attempt** | The prior isolated MySQL 8.4, Redis, Qdrant, Ollama, AI service, and Spring backend run passed Flyway V1–V8, Hibernate validation, and `GET /api/health` (`200 {"status":"UP"}`). During this final acceptance attempt, Docker Desktop's selected daemon socket did not answer; backend port 8084 refused connections. No boundary fixtures or requests were created. The original MySQL container and volume were not modified. See [`docs/evaluation/v3-http-boundary-2026-11-13.md`](evaluation/v3-http-boundary-2026-11-13.md). |
-| Browser registration and workspace flow | **PASS** | Automated browser session registered/logged in, created a workspace and document, indexed it, and used workspace-scoped search. This is agent-controlled browser evidence, not human acceptance. |
-| Grounded Ask and safety | **PASS, with latency caveat** | Ask returned the current runbook answer and citation while ignoring an instruction embedded in the document. An unsupported private-address question returned `NOT ENOUGH EVIDENCE` without sources. Under concurrent model/evaluation load one Ask returned a sanitized 503; retry after the stack was idle succeeded in 32.1 seconds. |
-| Reindex and cooldown | **PASS** | Browser-origin owner request returned `202`; a rapid second request returned `429` and the browser could read `Retry-After: 300` after the CORS fix. |
-| CORS | **PASS** | Real browser-origin API requests from `http://localhost:5173` to `http://localhost:8084` succeeded. The configured origin now exposes `Retry-After` in addition to `X-Request-Id`. |
-| Reindex authorization and bounds | **PARTIAL — live checks blocked** | Service tests cover MEMBER denial, the 501-active-document rejection before limiter acquisition, and bounded retry exhaustion to `FAILED`. Owner `202` and cooldown `429` were observed live; the requested MEMBER `403`, over-limit `413`, and exhausted worker retries were not exercised as live HTTP flows because the local Docker daemon was unavailable before setup. No result is claimed for these three checks. |
-| Retrieval evaluation | **PASS ON THE FIXTURE** | [`docs/evaluation/v3-local-2026-11-09.json`](evaluation/v3-local-2026-11-09.json) records 13 synthetic document revisions and 23 labeled queries (15 positive, 8 negative), using `intfloat/multilingual-e5-small` and cutoff `0.81`: Recall@5 `1.0`, Hit@5 `1.0`, MRR@5 `0.9333`, negative queries empty `8/8`. Lowest positive score is `0.8265`; highest negative candidate is `0.794`. These small synthetic results are regression evidence, not a production quality claim. |
-| Frozen V1 contract | **PASS** | No API contract change and no edits to migrations V1–V7. V8 remains the only V3 migration. |
-| Secret handling | **PASS** | `.env.v3` remains ignored and untracked. No local credential values are recorded in repository files. |
-| `git diff --check` | **PASS** | Re-run after final documentation/commit changes. |
+`V3KnowledgeHttpBoundaryIT` ran against the running Spring Boot server using `TestRestTemplate`; no MockMvc or direct controller invocation was used for the acceptance requests. All identities, workspaces, and documents were synthetic and lived only in the runner's temporary database.
 
-## Remaining acceptance gates
+| Test | Observed HTTP and sanitized response evidence | Database / Worker assertions | Result |
+|---|---|---|---|
+| `memberCannotReindexOrAffectWorkspaceTasksAndCooldown` | Owner reindex `202` (`{"queuedDocuments":1,"status":"QUEUED"}`); MEMBER on that workspace `403` (`{"status":403,"error":"Forbidden","message":"Insufficient workspace permissions"}`); non-member on another workspace `404`; owner on control workspace `202`. | Target index row count and limiter timestamp unchanged across MEMBER `403`; no AI Worker request from the denied operation; the other workspace remained independently operable. Membership was seeded as a real MEMBER row after the owner and member were registered/logged in over HTTP. | **PASS** |
+| `fiveHundredAndOneActiveDocumentsReturn413BeforeTaskOrCooldownWrites` | Database count was 501 ACTIVE documents. Two real owner reindex requests both returned `413` with `{"status":413,"error":"Payload Too Large","message":"Workspace reindex exceeds the supported document limit","fieldErrors":{}}`. | No index-state rows and no limiter row after either `413`; after deleting only the synthetic documents, the same workspace returned `202`; a separate control workspace also returned `202`. No AI inference task was created. | **PASS** |
+| `realWorkerPersistsEightFailuresThenStopsAndProcessesAfterAiRecovery` | Real reindex HTTP returned `202` (`queuedDocuments=1`, `status=QUEUED`); index-status HTTP returned `200`. The test AI endpoint returned controlled `503` for each Worker call. | Actual scheduled Worker made 8 calls; persisted attempts reached exactly 8. Attempts 1–7 had a next retry time; terminal state was `FAILED`, `next_attempt_at=NULL`, `lease_until=NULL`, and `last_error_summary=INDEXING_FAILED`. A 1-second wall-clock observation showed no ninth call. After the stub returned success, a new HTTP-accepted task reached `READY`. The test-only Clock advanced the production backoff schedule by about 10m15s in simulation; the JUnit test method took 1.853s wall time. Production backoff and `MAX_ATTEMPTS=8` were unchanged. | **PASS** |
 
-- [x] Confirm all three workflows passed on implementation SHA `dad1787511a54758b86f80d08054176ba930c0a4`, including Backend Testcontainers and Java 21 image verification.
-- [ ] Run live HTTP checks for MEMBER `403`, the over-500-document `413`, and retry exhaustion to `FAILED`; these were blocked before any requests because the local Docker daemon did not answer. Existing service tests are not a substitute for live integration evidence.
-- [ ] Keep PR #10 open for human review. Do not merge it or start V4 as part of this acceptance task.
+The Backend workflow emitted the expected route/status logs without logging JWTs, passwords, or the AI error sentinel. Its [JUnit report artifact](https://github.com/JoanH-project/opspilot/actions/runs/43378130105/artifacts/14015283475) records 3 tests, 0 failures, 0 errors, and 0 skipped (suite time 12.193s). The worker test method took 1.853s. GitHub retains this report artifact for 7 days.
 
-PR #10 is **not yet ready for human review**: it remains `PARTIAL` until the three live HTTP checks pass. The runner compatibility fix is verified on `edb2834`; the application implementation CI also passed on `dad1787`. Local `mvn clean verify` remains blocked by the Docker Desktop/Testcontainers socket metadata issue. Do not report local verify as passing.
+## CI for the acceptance code SHA
 
-## Scope and data boundary
+- [Backend CI run 43378130105](https://github.com/JoanH-project/opspilot/actions/runs/43378130105) — **PASS**: `mvn clean verify`, existing MySQL/Redis Testcontainers integration, the three V3 HTTP acceptance tests, Java 21 image build and runtime confirmation, and JUnit artifact upload.
+- [AI Service CI run 43378130078](https://github.com/JoanH-project/opspilot/actions/runs/43378130078) — **PASS**: lint, Qdrant-backed tests, and image build.
+- [Frontend CI run 43378129996](https://github.com/JoanH-project/opspilot/actions/runs/43378129996) — **PASS**: tests, lint, and build.
 
-- MySQL is the source of truth; Qdrant data is derived and rebuildable.
-- Spring owns authentication, authorization, and current-document/revision checks. The Python service is private and accepts only internal-token requests.
-- Embeddings and generation use local E5 and Ollama; no paid AI API or cloud inference is configured.
-- V1 API contract and migrations V1–V7 are frozen. V4 Agent work has not started.
+All runs are associated with PR head `b8adb8903724f918ecb518da8114fe38a0c4a2b2`; the Backend PR job checked out the corresponding merge ref `f55b67666fb260187579b52ff76f009501454825`. Testcontainers started temporary `mysql:8.4` and `redis:7.4-alpine` containers on the runner. Testcontainers stopped their containers after the class and the hosted runner was discarded after the job. No local database, existing MySQL container/volume, production credential, or paid AI service was used.
+
+## Other V3 evidence and limits
+
+- Prior browser evidence: registration/login, indexing, search and cited answers passed; prompt-like document text did not override instructions; an unsupported query returned `NOT ENOUGH EVIDENCE`. Owner reindex returned `202`, a rapid repeat returned `429`, and browser code could read `Retry-After: 300`. These are prior observed flows, separate from the three CI boundary tests.
+- [`docs/evaluation/v3-local-2026-11-09.json`](evaluation/v3-local-2026-11-09.json) contains a small **synthetic regression fixture** (13 document revisions, 23 queries): Recall@5 `1.0`, Hit@5 `1.0`, MRR@5 `0.9333`, and 8/8 negative queries empty at cutoff `0.81`. This is not a production corpus and does not guarantee production retrieval quality.
+- This machine's Docker Desktop daemon remains unresponsive. Local Testcontainers/`mvn clean verify` was not run or claimed as passing in this task. Local `mvn -DskipTests test-compile` passed, and `mvn test` passed 55 unit tests. This local environment maintenance issue is independent of the successful isolated CI acceptance.
+- The current Backend CI runner pin to Ubuntu 24.04 resolves the hosted Testcontainers Docker API compatibility issue observed on a prior runner image.
+- No V1 API contract or V1–V7 migration changed. V8 remains the V3 knowledge migration. Qdrant remains derived/rebuildable data; embeddings and generation use local E5/Ollama with no paid inference API.
+
+## Review handoff
+
+V3 is `V3_READY_FOR_HUMAN_REVIEW`. PR #10 remains OPEN and unmerged for human code review. Do not merge it or begin V4 as part of this acceptance handoff.

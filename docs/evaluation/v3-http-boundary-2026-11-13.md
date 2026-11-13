@@ -1,34 +1,60 @@
-# V3 live HTTP boundary acceptance — 2026-11-13
+# V3 HTTP boundary acceptance — 2026-11-13
 
-**Result: PARTIAL — blocked before the three requests.** No MEMBER `403`, size-limit `413`, or worker-exhaustion result is claimed.
+**Result: PASS — `V3_READY_FOR_HUMAN_REVIEW`.** The three previously outstanding real HTTP checks ran in isolated GitHub Actions Testcontainers infrastructure. PR #10 remains OPEN and unmerged.
 
-## Precondition and observed blocker
+## Execution
 
-- Target branch: `feat/v3-knowledge-rag`; PR #10 was open and unmerged.
-- Initial implementation SHA: `dad1787511a54758b86f80d08054176ba930c0a4`.
-- The selected Docker context was `desktop-linux`, using `/Users/joan/.docker/run/docker.sock`.
-- The Docker socket existed, but bounded `docker ps` probes did not return. Docker Desktop was launched with `open -a Docker`; the daemon still did not answer a 12-second probe.
-- `GET http://localhost:8084/api/health` failed to connect. The isolated backend was therefore unavailable before test setup.
-- No HTTP boundary request or synthetic fixture write was made. No service/Compose configuration or application code was changed. The original `opspilot-mysql` container and its volume were not targeted or modified; their health could not be rechecked while the daemon was unavailable.
+- PR: [#10](https://github.com/JoanH-project/opspilot/pull/10), branch `feat/v3-knowledge-rag`.
+- Acceptance code SHA: `b8adb8903724f918ecb518da8114fe38a0c4a2b2`.
+- Backend workflow: [run 43378130105](https://github.com/JoanH-project/opspilot/actions/runs/43378130105), Ubuntu 24.04, Java 21. The PR workflow checked out merge ref `f55b67666fb260187579b52ff76f009501454825`, containing the stated head.
+- Runtime: Spring Boot `RANDOM_PORT` + `TestRestTemplate`, real JWT registration/login, MySQL 8.4 Testcontainers, Redis 7.4 Testcontainers, Flyway V1–V8, real JPA authorization and reindex limiter, and the scheduled production Worker.
+- Test-only substitute: a JDK HTTP server bound to `127.0.0.1` replaced only the private AI HTTP dependency. It checked the internal token and returned controlled `503` failures or a success response. Backend, Redis, database, HTTP routes, JWT, and Worker were not mocked.
+- Test data: generated users/workspaces and 501 synthetic documents existed only in the disposable CI MySQL instance. Testcontainers lifecycle and hosted-runner teardown removed the environment. The test made no connection to Joan's machine or existing MySQL volume.
 
-## Requested checks
+## Results
 
-| Check | Result | Evidence |
-|---|---|---|
-| OWNER reindex accepted; actual MEMBER reindex denied with `403`; no task/limiter side effects; other workspace isolated | **BLOCKED — not run** | No backend listener was available, so no real HTTP request or response exists. |
-| 501 synthetic active documents; real reindex request returns `413`; no index state/cooldown side effect | **BLOCKED — not run** | The isolated MySQL could not be reached through Docker. No synthetic documents were inserted. |
-| Real HTTP reindex accepted; AI dependency failure; worker reaches persisted `FAILED` after bounded retries; service recovery | **BLOCKED — not run** | The isolated backend and AI service could not be controlled or queried. No failure injection was performed. |
+### MEMBER authorization and workspace isolation
 
-Existing backend unit tests cover the corresponding MEMBER authorization, document-count guard, and `MAX_ATTEMPTS = 8` behavior. They do not replace these requested real HTTP and worker-persistence checks.
+Test: `memberCannotReindexOrAffectWorkspaceTasksAndCooldown` — **PASS**.
 
-## Current-head CI and other evidence
+- Register/login for owner and member used HTTP. The owner created two workspaces; the MEMBER relation was persisted in isolated MySQL.
+- Owner reindex on the populated workspace: `202`, `{"queuedDocuments":1,"status":"QUEUED"}`.
+- MEMBER reindex on that workspace: `403`, `{"status":403,"error":"Forbidden","message":"Insufficient workspace permissions"}`.
+- Non-member request on the other workspace: `404`; its owner then reindexed it successfully with `202`.
+- Database assertions: the target's index-state row count and limiter timestamp were unchanged across the denied request; no Worker/AI call was caused by the denial. The separate workspace remained operable.
 
-The implementation SHA above has successful PR workflows: [Backend CI run 42602909666](https://github.com/JoanH-project/opspilot/actions/runs/42602909666), [AI Service CI run 42602909619](https://github.com/JoanH-project/opspilot/actions/runs/42602909619), and [Frontend CI run 42602909697](https://github.com/JoanH-project/opspilot/actions/runs/42602909697). Backend CI covers its Testcontainers integration and Java 21 build. These CI results do not establish the three blocked local HTTP checks.
+### 501 ACTIVE documents
 
-The later documentation commit `1443fd60f11d2749a23b36d7001293395bf21dc9` had AI Service CI [run 43374135506](https://github.com/JoanH-project/opspilot/actions/runs/43374135506) and Frontend CI [run 43374135550](https://github.com/JoanH-project/opspilot/actions/runs/43374135550) pass. Backend CI [run 43374135597](https://github.com/JoanH-project/opspilot/actions/runs/43374135597) failed because the `ubuntu-latest` runner used a Docker daemon with minimum API 1.40 while Testcontainers requested API 1.32. `.github/workflows/backend-ci.yml` now pins the backend runner to Ubuntu 24.04; the updated workflow passed on `edb2834` as recorded below. This CI issue is separate from the unavailable local Docker daemon that blocked the three HTTP checks.
+Test: `fiveHundredAndOneActiveDocumentsReturn413BeforeTaskOrCooldownWrites` — **PASS**.
 
-After that runner fix, all three workflows passed on `edb283477353a0520b32e2ca57a922fa2dae10bd`: [Backend CI run 43374514912](https://github.com/JoanH-project/opspilot/actions/runs/43374514912), [AI Service CI run 43374514982](https://github.com/JoanH-project/opspilot/actions/runs/43374514982), and [Frontend CI run 43374514833](https://github.com/JoanH-project/opspilot/actions/runs/43374514833). Backend job steps confirmed Testcontainers integration, Java 21 image build, and image runtime. The CI runner fix does not unblock the three local HTTP checks.
+- MySQL count before the request: 501 ACTIVE documents.
+- Two actual owner reindex HTTP requests returned `413` with the safe API structure `{"status":413,"error":"Payload Too Large","message":"Workspace reindex exceeds the supported document limit","fieldErrors":{}}`.
+- Database assertions after both requests: no index-state rows and no limiter row. Once only the synthetic documents were deleted, the workspace accepted reindex with `202`; a different workspace also accepted with `202`. No index task or AI inference was created by the rejected requests.
 
-Prior browser flows and the small synthetic retrieval evaluation remain as previously recorded in [`V3_ACCEPTANCE.md`](../V3_ACCEPTANCE.md). The evaluation fixture is regression evidence only and makes no production-quality claim.
+### Worker retries exhausted and recovery
 
-**Next acceptance action:** restore a functioning local Docker Desktop daemon, confirm only the isolated `opspilot-v3-local` stack is used, then run all three checks and record sanitized request/response plus database-state evidence. Keep PR #10 open. Do not start V4.
+Test: `realWorkerPersistsEightFailuresThenStopsAndProcessesAfterAiRecovery` — **PASS**.
+
+- Reindex HTTP: `202`, `queuedDocuments=1`, `status=QUEUED`; index-status HTTP: `200`.
+- The real Worker called the localhost AI HTTP stub eight times and the stub returned `503` each time. Database state was checked after each persisted failure.
+- Attempts 1–7 each had a non-null next retry time. At attempt 8, the final database row was `FAILED`, `attempts=8`, `next_attempt_at=NULL`, `lease_until=NULL`, and `last_error_summary=INDEXING_FAILED`. The private sentinel and internal token were absent from the stored error.
+- A further one-second wall-clock observation showed no ninth request. The test then switched only the stub to success; an independently created task was accepted over HTTP and reached `READY` through the real Worker.
+- Test `Clock` advancement simulated the unchanged production backoff schedule (about 10m15s); the JUnit test method elapsed 1.853s wall time. Production `MAX_ATTEMPTS=8` and backoff configuration were not modified.
+
+## JUnit evidence and CI
+
+Backend CI reports `V3KnowledgeHttpBoundaryIT`: 3 tests, 0 failures, 0 errors, 0 skipped; suite time 12.193s. [JUnit artifact](https://github.com/JoanH-project/opspilot/actions/runs/43378130105/artifacts/14015283475) is retained for 7 days. CI logs show successful Flyway V1–V8 application, application startup, route statuses, and eight sanitized Worker failure records; they do not contain test JWTs, passwords, or the AI error sentinel.
+
+All three workflows completed successfully for acceptance code SHA `b8adb8903724f918ecb518da8114fe38a0c4a2b2`:
+
+- [Backend CI — run 43378130105](https://github.com/JoanH-project/opspilot/actions/runs/43378130105)
+- [AI Service CI — run 43378130078](https://github.com/JoanH-project/opspilot/actions/runs/43378130078)
+- [Frontend CI — run 43378129996](https://github.com/JoanH-project/opspilot/actions/runs/43378129996)
+
+The small local retrieval fixture remains synthetic regression evidence only: 13 document revisions and 23 queries produced Recall@5 1.0, Hit@5 1.0, MRR@5 0.9333, and 8/8 negative queries empty at the chosen threshold. It is not a production-quality guarantee. Prior real browser registration, login, indexing, search, cited answers, injection-text handling, insufficient-evidence response, and `202`/`429` plus readable `Retry-After: 300` remain separate previously observed evidence.
+
+## Local environment and scope
+
+Docker Desktop on the developer machine remains unresponsive. No local `mvn clean verify` was run or claimed in this acceptance. Local test compilation passed and `mvn test` passed 55 unit tests; these do not substitute for the CI integration run. This local daemon issue does not block this completed cloud acceptance.
+
+No V1 API contract or V1–V7 migration was changed; V8 remains the V3 migration. No existing local `opspilot-mysql` container or volume was touched. Qdrant remains derived/rebuildable data, and local E5/Ollama remains the zero-paid-inference design. No V4 work or merge was performed.
