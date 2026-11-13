@@ -28,6 +28,7 @@ import com.opspilot.document.DocumentStatus;
 import com.opspilot.document.DocumentRepository;
 import com.opspilot.knowledge.DocumentIndexState;
 import com.opspilot.knowledge.DocumentIndexStateRepository;
+import com.opspilot.knowledge.DocumentIndexJobService;
 import com.opspilot.knowledge.DocumentIndexStatus;
 import com.opspilot.user.UserRepository;
 import com.opspilot.workspace.WorkspaceMember;
@@ -328,6 +329,42 @@ class V3KnowledgeHttpBoundaryIT {
                         + "safeError=INDEXING_FAILED; ninthAttemptDuring1sObservation=false; recoveryNewTask=READY; "
                         + "simulatedClockAdvanceSeconds=" + Duration.between(testClockStart, testClock.instant()).toSeconds()
                         + "; wallElapsedMillis=" + Duration.between(wallStart, Instant.now()).toMillis());
+    }
+
+    @Test
+    void realWorkerMakesExpiredEighthClaimTerminalWithoutCallingAiAgain(TestReporter evidence) {
+        AuthenticatedUser owner = registerAndLogin("crashed-worker-owner");
+        long workspaceId = createWorkspace(owner.token(), "crashed-final-claim");
+        long documentId = insertActiveDocument(workspaceId, owner.userId());
+
+        Instant now = testClock.instant();
+        DocumentIndexState crashedAttempt = new DocumentIndexState(
+                documentId, workspaceId, 0L, now.minusSeconds(100));
+        for (int attempt = 1; attempt <= DocumentIndexJobService.MAX_ATTEMPTS; attempt++) {
+            crashedAttempt.claim(now.minusSeconds(100), now.minusSeconds(1), "crashed-claim-" + attempt);
+        }
+        indexStates.saveAndFlush(crashedAttempt);
+        int aiRequestsBeforeRecovery = AI_INDEX_REQUESTS.get();
+
+        await().pollInterval(Duration.ofMillis(25)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            StateSnapshot terminal = stateSnapshot(documentId);
+            assertThat(terminal.status()).isEqualTo(DocumentIndexStatus.FAILED);
+            assertThat(terminal.attempts()).isEqualTo(DocumentIndexJobService.MAX_ATTEMPTS);
+            assertThat(terminal.nextAttemptAt()).isNull();
+            assertThat(terminal.leaseUntil()).isNull();
+            assertThat(terminal.errorSummary()).isEqualTo("INDEXING_FAILED");
+            assertThat(AI_INDEX_REQUESTS.get()).isEqualTo(aiRequestsBeforeRecovery);
+        });
+
+        await().pollInterval(Duration.ofMillis(50)).during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> {
+                    assertThat(AI_INDEX_REQUESTS.get()).isEqualTo(aiRequestsBeforeRecovery);
+                    assertThat(stateSnapshot(documentId).status()).isEqualTo(DocumentIndexStatus.FAILED);
+                });
+        evidence.publishEntry("v3.worker-expired-final-lease-recovery",
+                "syntheticCrashedState=INDEXING attempts=8 expiredLease; databaseQueryReclaimedRow=true; "
+                        + "terminalStatus=FAILED; attempts=8; nextAttemptAt=null; leaseUntil=null; "
+                        + "additionalAiRequests=0; ninthAttempt=false");
     }
 
     private AuthenticatedUser registerAndLogin(String label) {
