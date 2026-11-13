@@ -114,6 +114,31 @@ curl http://localhost:8083/actuator/health
 
 Stop only the V2 demo with `docker compose -f docker-compose.v2.yml down`. The default `docker compose down` command below still applies only to the original MySQL development stack. Never prune or delete the original `opspilot_mysql_data` volume as part of V2 work.
 
+## V3 local knowledge demo
+
+V3 is in progress on `feat/v3-knowledge-rag`. It adds a local FastAPI + multilingual E5 + Qdrant retrieval service and local Ollama answer model. The dedicated Compose file uses V3-only containers and volumes, loopback MySQL port 3310, and backend port 8084. Qdrant, Ollama, Redis, and FastAPI have no host-published ports. The original MySQL and V2 demo remain separate.
+
+Copy `.env.v3.example` to the ignored `.env.v3` file once and reuse it on restarts so credentials continue to match the data volumes. Set each blank secret locally using a password manager or `openssl rand -hex 32`; the JWT secret and AI internal token must be at least 32 characters. Do not copy secrets into Git or chat. `chmod 600 .env.v3` restricts local access.
+
+```bash
+docker compose --env-file .env.v3 -f docker-compose.v3.yml up -d --build
+docker compose --env-file .env.v3 -f docker-compose.v3.yml ps
+# Pull the local answer model once; model data stays in its V3 named volume.
+docker compose --env-file .env.v3 -f docker-compose.v3.yml exec ollama ollama pull qwen2.5:1.5b-instruct
+curl http://localhost:8084/api/health
+```
+
+The first document indexing request downloads the pinned E5 weights into a persistent V3 cache volume. Retrieval uses Qdrant and remains available if Ollama is stopped; answer requests then return a sanitized `503`. To run the real E5/Qdrant retrieval evaluation, follow [docs/V3_EVALUATION.md](docs/V3_EVALUATION.md).
+
+Run the frontend in a separate terminal:
+
+```bash
+cd frontend
+VITE_API_BASE_URL=http://localhost:8084 npm run dev
+```
+
+Open `http://localhost:5173/app/<workspaceId>/knowledge`. Stop only V3 with `docker compose --env-file .env.v3 -f docker-compose.v3.yml down`; this keeps V3 volumes. Do not use `down -v`, `docker volume prune`, or generic container cleanup for this demo. Full architecture and service boundaries are in [docs/V3_ARCHITECTURE.md](docs/V3_ARCHITECTURE.md).
+
 ## Register, log in, and get the current user
 
 For non-local deployments, set a strong JWT secret:
@@ -299,6 +324,10 @@ Frontend CI runs the same four commands with Node 22, which meets the minimum No
 | `docs/ENVIRONMENT.md` | Environment variable reference |
 | `docs/V2_PRODUCTION_BACKEND.md` | V2 production configuration, Redis limiter, observability, and isolated demo |
 | `docs/V2_ACCEPTANCE.md` | V2 verification evidence and open blockers |
+| `docs/V3_ARCHITECTURE.md` | V3 local RAG components and trust boundaries |
+| `docs/V3_API.md` | Additive V3 Knowledge API reference |
+| `docs/V3_EVALUATION.md` | Synthetic corpus, metrics, and real retrieval evaluation procedure |
+| `docs/V3_ACCEPTANCE.md` | V3 verification record and remaining acceptance gates |
 | `frontend/README.md` | Frontend-specific setup and development |
 | `AGENTS.md` | Long-lived engineering rules |
 | `PROJECT_ROADMAP.md` | Architecture, milestones, team ownership |

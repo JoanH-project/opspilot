@@ -24,7 +24,9 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # Testcontainers 1.21 uses Docker API 1.32; ubuntu-latest moved to a daemon
+    # requiring API 1.40, so keep this job on the compatible 24.04 runner.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -42,6 +44,15 @@ jobs:
 
       - name: Verify backend (unit + Testcontainers integration)
         run: mvn clean verify
+
+      - name: Upload V3 HTTP boundary JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-http-boundary-junit-${{ github.run_id }}
+          path: backend/target/failsafe-reports/TEST-com.opspilot.acceptance.V3KnowledgeHttpBoundaryIT.xml
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Build Java 21 backend image
         working-directory: .

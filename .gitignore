@@ -22,5 +22,13 @@ node_modules/
 dist/
 build/
 
+# Python / uv
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
 # Local tooling (not part of the repo)
 .tools/
+.env.v3

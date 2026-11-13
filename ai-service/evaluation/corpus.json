@@ -1,0 +1,227 @@
+{
+  "description": "Synthetic OpsPilot-like English and Chinese runbooks; contains no user data.",
+  "workspace_id": 701,
+  "documents": [
+    {
+      "document_id": 101,
+      "revision": 1,
+      "title": "Incident response",
+      "content": "# API incidents\n\nWhen the API returns repeated server errors, check /api/health and the service logs. If recovery takes more than five minutes, page the on-call engineer from the current rotation. Include the request ID and affected operation in the incident handoff."
+    },
+    {
+      "document_id": 102,
+      "revision": 1,
+      "title": "Release process",
+      "content": "# Scheduled releases\n\nThe standard release window is Tuesday at 10:00 UTC. Lin is the change owner. Verify the health endpoint before announcing completion and use the incident runbook if deployment errors continue."
+    },
+    {
+      "document_id": 103,
+      "revision": 1,
+      "title": "数据库故障处理",
+      "content": "# 数据库不可用\n\n数据库连接失败时，先检查数据库健康状态和连接池指标。确认备份可用后联系值班工程师，不要直接删除或重建生产数据。"
+    },
+    {
+      "document_id": 201,
+      "revision": 1,
+      "title": "Database recovery (old revision)",
+      "content": "# Old recovery procedure\n\nOld procedure: write directly to the primary database during a failover. This procedure is obsolete."
+    },
+    {
+      "document_id": 201,
+      "revision": 2,
+      "title": "Database recovery",
+      "content": "# Current recovery procedure\n\nAfter database failover, verify the replica is healthy, pause writes, and confirm the latest backup before restoring service. Never write directly to an unverified primary."
+    },
+    {
+      "document_id": 301,
+      "workspace_id": 799,
+      "revision": 1,
+      "title": "Other workspace private token note",
+      "content": "# Private access\n\nWorkspace 799 uses a red team vault password. This content must never appear in Workspace 701 retrieval."
+    },
+    {
+      "document_id": 401,
+      "revision": 1,
+      "title": "Retired paging runbook",
+      "content": "# Retired runbook\n\nThe legacy paging system used the obsolete pager code BLUE-17. This document is archived and must not appear in knowledge results."
+    },
+    {
+      "document_id": 104,
+      "revision": 1,
+      "title": "Incident communications",
+      "content": "# Customer incident updates\n\nFor an incident affecting customers, publish a status update every 15 minutes. Include affected services, known impact, and the time of the next update. Never include credentials or personal information in a status update."
+    },
+    {
+      "document_id": 105,
+      "revision": 1,
+      "title": "Workspace access troubleshooting",
+      "content": "# Workspace access\n\nWhen a member cannot open a workspace, confirm the membership is active and check the assigned OWNER, ADMIN, or MEMBER role. Ask a workspace OWNER to restore membership when it is missing. Never share user accounts to bypass access controls."
+    },
+    {
+      "document_id": 106,
+      "revision": 1,
+      "title": "Backup and restore procedure",
+      "content": "# Database backup recovery\n\nDaily backups run at 02:00 UTC and are retained for 30 days. Restore a backup into an isolated staging environment first, verify its checksum and application health, then request OWNER approval before promoting it to production."
+    },
+    {
+      "document_id": 107,
+      "revision": 1,
+      "title": "Release rollback procedure",
+      "content": "# Roll back an unhealthy release\n\nIf a release causes elevated errors, stop the rollout, compare health checks and error rates, and roll back to the last known-good image. Verify the health endpoint and notify the release owner before declaring recovery."
+    },
+    {
+      "document_id": 108,
+      "revision": 1,
+      "title": "Blocked task escalation",
+      "content": "# Escalate blocked work\n\nWhen a task remains blocked for more than one business day, notify its assignee and the workspace ADMIN. Record the blocker and next action in the task before changing its due date."
+    },
+    {
+      "document_id": 109,
+      "revision": 1,
+      "title": "Exposed API credential response",
+      "content": "# Rotate an exposed API credential\n\nIf an API key is exposed, revoke it in the secret manager, create a replacement, update the dependent service, and verify the service health. Do not paste keys into chat, tickets, or runbooks."
+    }
+  ],
+  "archived_document_id": 401,
+  "archived_revision": 2,
+  "queries": [
+    {
+      "id": "en_incident_exact",
+      "workspace_id": 701,
+      "query": "What should I do when the API returns repeated server errors?",
+      "relevant_document_ids": [101]
+    },
+    {
+      "id": "en_incident_paraphrase",
+      "workspace_id": 701,
+      "query": "Where can I find the emergency responder rotation?",
+      "relevant_document_ids": [101]
+    },
+    {
+      "id": "zh_database_health",
+      "workspace_id": 701,
+      "query": "数据库无法连接时应该先检查什么？",
+      "relevant_document_ids": [103]
+    },
+    {
+      "id": "multi_release_and_incident",
+      "workspace_id": 701,
+      "query": "How should we prepare for a release and escalate a continuing outage?",
+      "relevant_document_ids": [101, 102]
+    },
+    {
+      "id": "updated_current_revision",
+      "workspace_id": 701,
+      "query": "What is the safe process after database failover?",
+      "relevant_document_ids": [201]
+    },
+    {
+      "id": "no_answer",
+      "workspace_id": 701,
+      "query": "What is the private office address of the CEO?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "cross_workspace_only",
+      "workspace_id": 701,
+      "query": "What red team vault password does workspace 799 use?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "archived_only",
+      "workspace_id": 701,
+      "query": "What was the retired pager code?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "customer_status_cadence",
+      "workspace_id": 701,
+      "query": "How often should we update customers during an incident?",
+      "relevant_document_ids": [104]
+    },
+    {
+      "id": "status_update_content",
+      "workspace_id": 701,
+      "query": "What information belongs in a customer-facing outage update?",
+      "relevant_document_ids": [104]
+    },
+    {
+      "id": "workspace_access_role",
+      "workspace_id": 701,
+      "query": "Which membership settings should I check when someone cannot enter a workspace?",
+      "relevant_document_ids": [105]
+    },
+    {
+      "id": "account_sharing_policy",
+      "workspace_id": 701,
+      "query": "Can a team share one login to get around workspace permissions?",
+      "relevant_document_ids": [105]
+    },
+    {
+      "id": "backup_retention",
+      "workspace_id": 701,
+      "query": "How long are database backups kept?",
+      "relevant_document_ids": [106]
+    },
+    {
+      "id": "restore_staging",
+      "workspace_id": 701,
+      "query": "Where should I validate a database restore before production?",
+      "relevant_document_ids": [106]
+    },
+    {
+      "id": "release_rollback_trigger",
+      "workspace_id": 701,
+      "query": "What should we do first when a deployment increases errors?",
+      "relevant_document_ids": [107]
+    },
+    {
+      "id": "release_recovery_check",
+      "workspace_id": 701,
+      "query": "How do we verify recovery after rolling back a release?",
+      "relevant_document_ids": [107]
+    },
+    {
+      "id": "blocked_task_escalation",
+      "workspace_id": 701,
+      "query": "When does a blocked task need to be escalated and to whom?",
+      "relevant_document_ids": [108]
+    },
+    {
+      "id": "exposed_api_key",
+      "workspace_id": 701,
+      "query": "What should I do after an API key is accidentally exposed?",
+      "relevant_document_ids": [109]
+    },
+    {
+      "id": "negative_office_address",
+      "workspace_id": 701,
+      "query": "What is the chief executive's private home address?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "negative_payroll_schedule",
+      "workspace_id": 701,
+      "query": "On which weekday are employee salaries paid?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "negative_equity_ownership",
+      "workspace_id": 701,
+      "query": "What percentage of the company does each founder own?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "negative_leave_policy",
+      "workspace_id": 701,
+      "query": "How many weeks of parental leave are employees entitled to?",
+      "relevant_document_ids": []
+    },
+    {
+      "id": "negative_salary_band",
+      "workspace_id": 701,
+      "query": "What is the salary range for a senior engineer?",
+      "relevant_document_ids": []
+    }
+  ]
+}

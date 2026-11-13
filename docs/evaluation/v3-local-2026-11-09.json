@@ -1,0 +1,541 @@
+{
+  "embedding_model": "intfloat/multilingual-e5-small",
+  "embedding_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "embedding_weights_sha256": "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477",
+  "dimensions": 384,
+  "qdrant_version": "1.20.0",
+  "collection": "opspilot_eval_50c1027e8e67",
+  "top_k": 5,
+  "recall_at_5": 1.0,
+  "hit_at_5": 1.0,
+  "mrr_at_5": 0.9333,
+  "negative_queries_empty": 8,
+  "negative_queries_total": 8,
+  "cases": [
+    {
+      "id": "en_incident_exact",
+      "workspace_id": 701,
+      "query": "What should I do when the API returns repeated server errors?",
+      "relevant_document_ids": [
+        101
+      ],
+      "retrieved_document_ids": [
+        101,
+        109,
+        107,
+        201,
+        105
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 101,
+          "score": 0.9066
+        },
+        {
+          "document_id": 109,
+          "score": 0.857
+        },
+        {
+          "document_id": 107,
+          "score": 0.843
+        },
+        {
+          "document_id": 201,
+          "score": 0.8326
+        },
+        {
+          "document_id": 105,
+          "score": 0.8143
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 187.2
+    },
+    {
+      "id": "en_incident_paraphrase",
+      "workspace_id": 701,
+      "query": "Where can I find the emergency responder rotation?",
+      "relevant_document_ids": [
+        101
+      ],
+      "retrieved_document_ids": [
+        101
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 101,
+          "score": 0.8401
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 132.3
+    },
+    {
+      "id": "zh_database_health",
+      "workspace_id": 701,
+      "query": "数据库无法连接时应该先检查什么？",
+      "relevant_document_ids": [
+        103
+      ],
+      "retrieved_document_ids": [
+        103,
+        201
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 103,
+          "score": 0.9119
+        },
+        {
+          "document_id": 201,
+          "score": 0.8266
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 92.2
+    },
+    {
+      "id": "multi_release_and_incident",
+      "workspace_id": 701,
+      "query": "How should we prepare for a release and escalate a continuing outage?",
+      "relevant_document_ids": [
+        101,
+        102
+      ],
+      "retrieved_document_ids": [
+        107,
+        102,
+        104,
+        101,
+        108
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 107,
+          "score": 0.8519
+        },
+        {
+          "document_id": 102,
+          "score": 0.8424
+        },
+        {
+          "document_id": 104,
+          "score": 0.8299
+        },
+        {
+          "document_id": 101,
+          "score": 0.8284
+        },
+        {
+          "document_id": 108,
+          "score": 0.8275
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 0.5,
+      "elapsed_ms": 192.2
+    },
+    {
+      "id": "updated_current_revision",
+      "workspace_id": 701,
+      "query": "What is the safe process after database failover?",
+      "relevant_document_ids": [
+        201
+      ],
+      "retrieved_document_ids": [
+        201,
+        106
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 201,
+          "score": 0.874
+        },
+        {
+          "document_id": 106,
+          "score": 0.8235
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 422.4
+    },
+    {
+      "id": "no_answer",
+      "workspace_id": 701,
+      "query": "What is the private office address of the CEO?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 209.6
+    },
+    {
+      "id": "cross_workspace_only",
+      "workspace_id": 701,
+      "query": "What red team vault password does workspace 799 use?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 129.4
+    },
+    {
+      "id": "archived_only",
+      "workspace_id": 701,
+      "query": "What was the retired pager code?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 139.8
+    },
+    {
+      "id": "customer_status_cadence",
+      "workspace_id": 701,
+      "query": "How often should we update customers during an incident?",
+      "relevant_document_ids": [
+        104
+      ],
+      "retrieved_document_ids": [
+        104,
+        101
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 104,
+          "score": 0.901
+        },
+        {
+          "document_id": 101,
+          "score": 0.8353
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 135.8
+    },
+    {
+      "id": "status_update_content",
+      "workspace_id": 701,
+      "query": "What information belongs in a customer-facing outage update?",
+      "relevant_document_ids": [
+        104
+      ],
+      "retrieved_document_ids": [
+        104
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 104,
+          "score": 0.8325
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 158.5
+    },
+    {
+      "id": "workspace_access_role",
+      "workspace_id": 701,
+      "query": "Which membership settings should I check when someone cannot enter a workspace?",
+      "relevant_document_ids": [
+        105
+      ],
+      "retrieved_document_ids": [
+        105,
+        108,
+        101,
+        109
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 105,
+          "score": 0.9124
+        },
+        {
+          "document_id": 108,
+          "score": 0.8271
+        },
+        {
+          "document_id": 101,
+          "score": 0.8185
+        },
+        {
+          "document_id": 109,
+          "score": 0.8119
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 429.4
+    },
+    {
+      "id": "account_sharing_policy",
+      "workspace_id": 701,
+      "query": "Can a team share one login to get around workspace permissions?",
+      "relevant_document_ids": [
+        105
+      ],
+      "retrieved_document_ids": [
+        105
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 105,
+          "score": 0.8421
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 298.4
+    },
+    {
+      "id": "backup_retention",
+      "workspace_id": 701,
+      "query": "How long are database backups kept?",
+      "relevant_document_ids": [
+        106
+      ],
+      "retrieved_document_ids": [
+        106,
+        201
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 106,
+          "score": 0.8784
+        },
+        {
+          "document_id": 201,
+          "score": 0.8131
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 231.4
+    },
+    {
+      "id": "restore_staging",
+      "workspace_id": 701,
+      "query": "Where should I validate a database restore before production?",
+      "relevant_document_ids": [
+        106
+      ],
+      "retrieved_document_ids": [
+        201,
+        106,
+        107,
+        101,
+        103
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 201,
+          "score": 0.8714
+        },
+        {
+          "document_id": 106,
+          "score": 0.8568
+        },
+        {
+          "document_id": 107,
+          "score": 0.8246
+        },
+        {
+          "document_id": 101,
+          "score": 0.8144
+        },
+        {
+          "document_id": 103,
+          "score": 0.8136
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 0.5,
+      "elapsed_ms": 195.2
+    },
+    {
+      "id": "release_rollback_trigger",
+      "workspace_id": 701,
+      "query": "What should we do first when a deployment increases errors?",
+      "relevant_document_ids": [
+        107
+      ],
+      "retrieved_document_ids": [
+        107
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 107,
+          "score": 0.8265
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 255.2
+    },
+    {
+      "id": "release_recovery_check",
+      "workspace_id": 701,
+      "query": "How do we verify recovery after rolling back a release?",
+      "relevant_document_ids": [
+        107
+      ],
+      "retrieved_document_ids": [
+        107,
+        201,
+        101,
+        106,
+        102
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 107,
+          "score": 0.903
+        },
+        {
+          "document_id": 201,
+          "score": 0.8839
+        },
+        {
+          "document_id": 101,
+          "score": 0.8523
+        },
+        {
+          "document_id": 106,
+          "score": 0.8492
+        },
+        {
+          "document_id": 102,
+          "score": 0.8354
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 124.7
+    },
+    {
+      "id": "blocked_task_escalation",
+      "workspace_id": 701,
+      "query": "When does a blocked task need to be escalated and to whom?",
+      "relevant_document_ids": [
+        108
+      ],
+      "retrieved_document_ids": [
+        108
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 108,
+          "score": 0.8788
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 129.7
+    },
+    {
+      "id": "exposed_api_key",
+      "workspace_id": 701,
+      "query": "What should I do after an API key is accidentally exposed?",
+      "relevant_document_ids": [
+        109
+      ],
+      "retrieved_document_ids": [
+        109,
+        101,
+        105,
+        201,
+        107
+      ],
+      "retrieved_scores": [
+        {
+          "document_id": 109,
+          "score": 0.9054
+        },
+        {
+          "document_id": 101,
+          "score": 0.8575
+        },
+        {
+          "document_id": 105,
+          "score": 0.822
+        },
+        {
+          "document_id": 201,
+          "score": 0.8214
+        },
+        {
+          "document_id": 107,
+          "score": 0.8158
+        }
+      ],
+      "hit_at_5": true,
+      "reciprocal_rank_at_5": 1.0,
+      "elapsed_ms": 109.5
+    },
+    {
+      "id": "negative_office_address",
+      "workspace_id": 701,
+      "query": "What is the chief executive's private home address?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 161.4
+    },
+    {
+      "id": "negative_payroll_schedule",
+      "workspace_id": 701,
+      "query": "On which weekday are employee salaries paid?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 122.9
+    },
+    {
+      "id": "negative_equity_ownership",
+      "workspace_id": 701,
+      "query": "What percentage of the company does each founder own?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 110.0
+    },
+    {
+      "id": "negative_leave_policy",
+      "workspace_id": 701,
+      "query": "How many weeks of parental leave are employees entitled to?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 118.1
+    },
+    {
+      "id": "negative_salary_band",
+      "workspace_id": 701,
+      "query": "What is the salary range for a senior engineer?",
+      "relevant_document_ids": [],
+      "retrieved_document_ids": [],
+      "retrieved_scores": [],
+      "hit_at_5": false,
+      "reciprocal_rank_at_5": 0.0,
+      "elapsed_ms": 126.1
+    }
+  ],
+  "search_min_score": 0.81
+}

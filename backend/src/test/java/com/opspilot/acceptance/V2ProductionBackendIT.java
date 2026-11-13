@@ -14,12 +14,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.opspilot.auth.ratelimit.AuthAction;
 import com.opspilot.auth.ratelimit.AuthRateLimitProperties;
 import com.opspilot.auth.ratelimit.ClientAddressResolver;
 import com.opspilot.auth.ratelimit.RedisAuthRateLimiter;
 import com.opspilot.auth.ratelimit.TooManyAuthenticationAttemptsException;
+import com.opspilot.document.DocumentRepository;
+import com.opspilot.document.DocumentService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opspilot.document.DocumentStatus;
+import com.opspilot.document.dto.CreateDocumentRequest;
+import com.opspilot.knowledge.DocumentIndexStateRepository;
+import com.opspilot.user.UserRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +39,8 @@ import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,11 +67,13 @@ import static org.awaitility.Awaitility.await;
         "app.auth.rate-limit.ip.max-attempts=1000",
         "app.auth.rate-limit.ip.window=30s",
         "app.auth.rate-limit.account.max-attempts=3",
-        "app.auth.rate-limit.account.window=3s"
+        "app.auth.rate-limit.account.window=3s",
+        "app.knowledge.index-worker.enabled=false"
 })
 class V2ProductionBackendIT {
     private static final String METRICS_TEST_USERNAME = "v2-integration-metrics";
     private static final String METRICS_TEST_PASSWORD = "v2-integration-metrics-password";
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Container
     static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.4"))
@@ -81,6 +95,11 @@ class V2ProductionBackendIT {
     }
 
     @Autowired TestRestTemplate client;
+    @Autowired UserRepository users;
+    @Autowired DocumentRepository documents;
+    @Autowired DocumentIndexStateRepository documentIndexStates;
+    @Autowired DocumentService documentService;
+    @Autowired PlatformTransactionManager transactionManager;
     @LocalServerPort int apiPort;
     @LocalManagementPort int managementPort;
 
@@ -145,6 +164,54 @@ class V2ProductionBackendIT {
         assertThat(generatedId.getHeaders().getFirst("X-Request-Id")).matches("[0-9a-f-]{36}");
 
         verifyManagementSecurityAndHealth();
+    }
+
+    @Test
+    void documentWriteAndIndexOutboxCommitOrRollbackTogether() {
+        String email = "knowledge-outbox@example.com";
+        assertThat(jsonPost("/api/auth/register",
+                "{\"email\":\"" + email + "\",\"password\":\"password123\",\"name\":\"Outbox\"}")
+                .getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String token = login(email, "password123", HttpStatus.OK).getBody()
+                .replaceAll(".*\\\"accessToken\\\":\\\"([^\\\"]+)\\\".*", "$1");
+        HttpHeaders auth = bearer(token);
+        ResponseEntity<String> workspace = client.exchange(RequestEntity.post(uri("/api/workspaces"))
+                .headers(auth).contentType(MediaType.APPLICATION_JSON).body("{\"name\":\"Outbox workspace\"}"),
+                String.class);
+        assertThat(workspace.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        long workspaceId = longField(workspace.getBody(), "id");
+        Long userId = users.findByEmail(email).orElseThrow().getId();
+
+        for (int invalidLimit : new int[] {0, 11}) {
+            ResponseEntity<String> invalidSearch = client.exchange(RequestEntity
+                    .post(uri("/api/workspaces/" + workspaceId + "/knowledge/search"))
+                    .headers(auth).contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"query\":\"database\",\"limit\":" + invalidLimit + "}"),
+                    String.class);
+            assertThat(invalidSearch.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+        AtomicReference<Long> rolledBackDocumentId = new AtomicReference<>();
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            var created = documentService.create(workspaceId, userId,
+                    new CreateDocumentRequest("Rolled back", "This write must not survive."));
+            rolledBackDocumentId.set(created.id());
+            throw new IllegalStateException("rollback test");
+        })).isInstanceOf(IllegalStateException.class);
+        assertThat(rolledBackDocumentId.get()).isNotNull();
+        assertThat(documents.findById(rolledBackDocumentId.get())).isEmpty();
+        assertThat(documentIndexStates.findById(rolledBackDocumentId.get())).isEmpty();
+
+        var created = transaction.execute(status -> documentService.create(workspaceId, userId,
+                new CreateDocumentRequest("Committed", "The index state shares this transaction.")));
+        assertThat(created).isNotNull();
+        assertThat(documentIndexStates.findById(created.id())).hasValueSatisfying(state -> {
+            assertThat(state.getWorkspaceId()).isEqualTo(workspaceId);
+            assertThat(state.getRevision()).isZero();
+            assertThat(state.getStatus().name()).isEqualTo("PENDING");
+        });
+        assertThat(documents.countByWorkspace_IdAndStatus(workspaceId, DocumentStatus.ACTIVE)).isEqualTo(1);
     }
 
     @Test
@@ -296,8 +363,24 @@ class V2ProductionBackendIT {
         return headers;
     }
 
+    @Test
+    void longFieldReadsTheTopLevelIdFromObjectsAndArrayResponses() {
+        assertThat(longField("{\"id\":8,\"creator\":{\"id\":2}}", "id")).isEqualTo(8);
+        assertThat(longField("[{\"id\":8,\"owner\":{\"id\":2}}]", "id")).isEqualTo(8);
+    }
+
     private static long longField(String json, String field) {
-        return Long.parseLong(json.replaceAll(".*\\\"" + field + "\\\":([0-9]+).*", "$1"));
+        try {
+            JsonNode root = JSON.readTree(json);
+            JsonNode record = root.isArray() ? root.path(0) : root;
+            JsonNode value = record.get(field);
+            if (value == null || !value.canConvertToLong()) {
+                throw new IllegalArgumentException("Missing numeric JSON field: " + field);
+            }
+            return value.longValue();
+        } catch (JsonProcessingException exception) {
+            throw new IllegalArgumentException("Invalid JSON response", exception);
+        }
     }
 
     private LettuceConnectionFactory factory() {

@@ -40,3 +40,14 @@ export const documentQueryKeys = {
     ['documents', userId, workspaceId, status] as const,
   detail: (userId: number, documentId: number) => ['document', userId, documentId] as const,
 };
+
+export const knowledgeQueryKeys = {
+  workspace: (userId: number, workspaceId: number) =>
+    ['knowledge', userId, workspaceId] as const,
+  status: (userId: number, workspaceId: number) =>
+    ['knowledge', userId, workspaceId, 'index-status'] as const,
+  ask: (userId: number, workspaceId: number, question: string) =>
+    ['knowledge', userId, workspaceId, 'answer', question] as const,
+  search: (userId: number, workspaceId: number, query: string) =>
+    ['knowledge', userId, workspaceId, 'search', query] as const,
+};

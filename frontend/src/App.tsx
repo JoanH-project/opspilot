@@ -9,6 +9,7 @@ import { useAuth } from './features/auth/useAuth';
 import { WorkspaceBootstrap } from './features/workspaces/WorkspaceBootstrap';
 import { WorkspaceDashboardRoute } from './features/workspaces/WorkspaceDashboardRoute';
 import { DocumentsRoute, DocumentDetailRoute } from './features/documents/DocumentsRoute';
+import { KnowledgeRoute } from './features/knowledge/KnowledgeRoute';
 import { ProjectDetailRoute, ProjectsRoute } from './features/projects/ProjectsRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -68,6 +69,11 @@ function AppRoutes(): ReactElement {
       <Route
         path="/app/:workspaceId/documents/:documentId"
         element={<ProtectedRoute><DocumentDetailRoute /></ProtectedRoute>}
+      />
+
+      <Route
+        path="/app/:workspaceId/knowledge"
+        element={<ProtectedRoute><KnowledgeRoute /></ProtectedRoute>}
       />
 
       <Route path="*" element={<Navigate to={isAuthenticated ? '/app' : '/login'} replace />} />
