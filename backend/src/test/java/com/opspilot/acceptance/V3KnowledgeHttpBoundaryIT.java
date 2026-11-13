@@ -336,10 +336,11 @@ class V3KnowledgeHttpBoundaryIT {
         AuthenticatedUser owner = registerAndLogin("crashed-worker-owner");
         long workspaceId = createWorkspace(owner.token(), "crashed-final-claim");
         long documentId = insertActiveDocument(workspaceId, owner.userId());
+        long revision = documents.findById(documentId).orElseThrow().getRevision();
 
         Instant now = testClock.instant();
         DocumentIndexState crashedAttempt = new DocumentIndexState(
-                documentId, workspaceId, 0L, now.minusSeconds(100));
+                documentId, workspaceId, revision, now.minusSeconds(100));
         for (int attempt = 1; attempt <= DocumentIndexJobService.MAX_ATTEMPTS; attempt++) {
             crashedAttempt.claim(now.minusSeconds(100), now.minusSeconds(1), "crashed-claim-" + attempt);
         }
