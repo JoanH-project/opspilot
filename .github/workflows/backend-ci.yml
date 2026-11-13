@@ -24,7 +24,9 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # Testcontainers 1.21 uses Docker API 1.32; ubuntu-latest moved to a daemon
+    # requiring API 1.40, so keep this job on the compatible 24.04 runner.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
