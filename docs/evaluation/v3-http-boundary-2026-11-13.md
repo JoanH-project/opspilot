@@ -5,7 +5,7 @@
 ## Precondition and observed blocker
 
 - Target branch: `feat/v3-knowledge-rag`; PR #10 was open and unmerged.
-- Verified PR head: `dad1787511a54758b86f80d08054176ba930c0a4`.
+- Initial implementation SHA: `dad1787511a54758b86f80d08054176ba930c0a4`.
 - The selected Docker context was `desktop-linux`, using `/Users/joan/.docker/run/docker.sock`.
 - The Docker socket existed, but bounded `docker ps` probes did not return. Docker Desktop was launched with `open -a Docker`; the daemon still did not answer a 12-second probe.
 - `GET http://localhost:8084/api/health` failed to connect. The isolated backend was therefore unavailable before test setup.
@@ -26,6 +26,8 @@ Existing backend unit tests cover the corresponding MEMBER authorization, docume
 The implementation SHA above has successful PR workflows: [Backend CI run 42602909666](https://github.com/JoanH-project/opspilot/actions/runs/42602909666), [AI Service CI run 42602909619](https://github.com/JoanH-project/opspilot/actions/runs/42602909619), and [Frontend CI run 42602909697](https://github.com/JoanH-project/opspilot/actions/runs/42602909697). Backend CI covers its Testcontainers integration and Java 21 build. These CI results do not establish the three blocked local HTTP checks.
 
 The later documentation commit `1443fd60f11d2749a23b36d7001293395bf21dc9` had AI Service CI [run 43374135506](https://github.com/JoanH-project/opspilot/actions/runs/43374135506) and Frontend CI [run 43374135550](https://github.com/JoanH-project/opspilot/actions/runs/43374135550) pass. Backend CI [run 43374135597](https://github.com/JoanH-project/opspilot/actions/runs/43374135597) failed because the `ubuntu-latest` runner used a Docker daemon with minimum API 1.40 while Testcontainers requested API 1.32. `.github/workflows/backend-ci.yml` now pins the backend runner to Ubuntu 24.04; verification on the updated workflow is pending. This CI issue is separate from the unavailable local Docker daemon that blocked the three HTTP checks.
+
+After that runner fix, all three workflows passed on `edb283477353a0520b32e2ca57a922fa2dae10bd`: [Backend CI run 43374514912](https://github.com/JoanH-project/opspilot/actions/runs/43374514912), [AI Service CI run 43374514982](https://github.com/JoanH-project/opspilot/actions/runs/43374514982), and [Frontend CI run 43374514833](https://github.com/JoanH-project/opspilot/actions/runs/43374514833). Backend job steps confirmed Testcontainers integration, Java 21 image build, and image runtime. The CI runner fix does not unblock the three local HTTP checks.
 
 Prior browser flows and the small synthetic retrieval evaluation remain as previously recorded in [`V3_ACCEPTANCE.md`](../V3_ACCEPTANCE.md). The evaluation fixture is regression evidence only and makes no production-quality claim.
 
